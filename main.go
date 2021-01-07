@@ -6,6 +6,7 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"github.com/techartificer/swiftex/server"
+	"github.com/techartificer/swiftex/validators"
 )
 
 func init() {
@@ -20,9 +21,12 @@ func init() {
 	if err := models.InitializeIndex(database.GetDB()); err != nil {
 		panic(err)
 	}
+	validators.InitValidator()
 }
 
 func main() {
 	defer database.DisconnectMongo()
+
 	server.Start()
+	//! Don't code here
 }
