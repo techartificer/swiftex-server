@@ -3,12 +3,13 @@ package jwt
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
-	"github.com/caffeines/filepile/config"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
+	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/lib/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,13 +21,14 @@ type Claims struct {
 }
 
 func BuildJWTToken(phone, scope, id string) (string, error) {
+	log.Println(config.GetJWT().TTL)
 	claims := Claims{
 		UserID: id,
 		Phone:  phone,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  scope,
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * time.Duration(config.GetJWT().TTL)).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * time.Duration(config.GetJWT().TTL)).Unix(),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

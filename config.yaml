@@ -10,4 +10,5 @@ server:
 
 jwt:
   secret: '@sec43tv3r788#4a'
-  TTL: 168
+  TTL: 5
+  refreshTTL: 60

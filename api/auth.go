@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
@@ -75,7 +76,7 @@ func adminLogin(ctx echo.Context) error {
 		RefreshToken: jwt.NewRefresToken(),
 		AccessToken:  signedToken,
 		CreatedAt:    time.Now().UTC(),
-		ExpiresOn:    time.Now().Add(time.Hour * 1),
+		ExpiresOn:    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
 	}
 	sessRepo := data.NewSessionRepo()
 	if err = sessRepo.CreateSession(db, sess); err != nil {

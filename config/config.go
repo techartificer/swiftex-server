@@ -22,5 +22,6 @@ func LoadConfig() error {
 	}
 	LoadMongoDB()
 	LoadServer()
+	LoadJWT()
 	return nil
 }

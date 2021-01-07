@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/caffeines/filepile/lib"
+	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -48,7 +49,7 @@ func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken s
 		"refreshToken": lib.NewRefresToken(),
 		"accesstoken":  accessToken,
 		"createdAt":    time.Now().UTC(),
-		"expiresOn":    time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"expiresOn":    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
 	}}}
 	collectionName := sess.CollectionName()
 	sessionCollection := db.Collection(collectionName)
