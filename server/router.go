@@ -20,10 +20,11 @@ func GetRouter() http.Handler {
 	}))
 
 	router.Pre(middleware.AddTrailingSlash())
-	router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
-	// router.Use(EchoMonitoring())
-
+	router.Use(echoMonitoring())
+	router.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "time: ${time_rfc3339}, method: ${method}, uri: ${uri}, status: ${status}\n",
+	}))
 	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"*"},
