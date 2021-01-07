@@ -4,7 +4,9 @@ package codes
 type ErrorCode string
 
 const (
-	InvalidRegisterData ErrorCode = "400001"
-	DatabaseQueryFailed ErrorCode = "500001"
-	AdminNotFound       ErrorCode = "404001"
+	InvalidRegisterData    ErrorCode = "400001"
+	InvalidLoginCredential ErrorCode = "401001"
+	AdminNotFound          ErrorCode = "404001"
+	DatabaseQueryFailed    ErrorCode = "500001"
+	UserLoginFailed        ErrorCode = "500002"
 )

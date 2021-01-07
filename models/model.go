@@ -16,9 +16,22 @@ func createIndex(collection *mongo.Collection, keys interface{}, unique bool) er
 	return err
 }
 
+//
+func createIndexWithTTL(collection *mongo.Collection, keys interface{}, TTL int32) error {
+	opts := options.Index().SetExpireAfterSeconds(TTL)
+	_, err := collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    keys,
+		Options: opts,
+	})
+	return err
+}
+
 // InitializeIndex populates all collections indexes
 func InitializeIndex(db *mongo.Database) error {
 	if err := initAdminIndex(db); err != nil {
+		return err
+	}
+	if err := initSessionIndex(db); err != nil {
 		return err
 	}
 	return nil
