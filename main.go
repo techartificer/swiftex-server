@@ -4,18 +4,19 @@ import (
 	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/database"
 	"github.com/techartificer/swiftex/logger"
+	"github.com/techartificer/swiftex/server"
 )
 
 func init() {
 	logger.SetupLog()
-	err := config.LoadConfig()
-	if err != nil {
+
+	if err := config.LoadConfig(); err != nil {
 		panic(err)
 	}
-	err = database.ConnectMongo()
-	if err != nil {
+	if err := database.ConnectMongo(); err != nil {
 		panic(err)
 	}
+	server.Start()
 }
 
 func main() {

@@ -21,5 +21,6 @@ func LoadConfig() error {
 		return err
 	}
 	LoadMongoDB()
+	LoadServer()
 	return nil
 }
