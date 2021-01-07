@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/techartificer/swiftex/config"
+	"github.com/techartificer/swiftex/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -27,7 +28,7 @@ func ConnectMongo() error {
 	if err := instance.Ping(ctx, readpref.Primary()); err != nil {
 		return err
 	}
-	log.Println("Successfully connected to MongoDB")
+	logger.Log.Println("Successfully connected to MongoDB")
 	return nil
 }
 
