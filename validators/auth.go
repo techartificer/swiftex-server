@@ -6,7 +6,7 @@ import (
 
 // ReqLogin holds login request data
 type ReqLogin struct {
-	Username string `json:"username,omitempty" validate:"required"`
+	Phone    string `json:"phone,omitempty" validate:"required"`
 	Password string `json:"password,omitempty" validate:"required,min=6,max=26"`
 }
 

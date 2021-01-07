@@ -13,7 +13,7 @@ import (
 type AdminRepository interface {
 	Create(db *mongo.Database, admin *models.Admin) error
 	FindByID(db *mongo.Database, ID primitive.ObjectID) (*models.Admin, error)
-	FindByUsername(db *mongo.Database, username string) (*models.Admin, error)
+	FindByUsername(db *mongo.Database, phone string) (*models.Admin, error)
 }
 
 type adminRepositoryImpl struct{}
@@ -45,10 +45,10 @@ func (a *adminRepositoryImpl) FindByID(db *mongo.Database, ID primitive.ObjectID
 	return &admin, nil
 }
 
-func (a *adminRepositoryImpl) FindByUsername(db *mongo.Database, username string) (*models.Admin, error) {
+func (a *adminRepositoryImpl) FindByUsername(db *mongo.Database, phone string) (*models.Admin, error) {
 	admin := models.Admin{}
 	adminCollection := db.Collection(admin.CollectionName())
-	if err := adminCollection.FindOne(context.Background(), bson.M{"username": username}).Decode(&admin); err != nil {
+	if err := adminCollection.FindOne(context.Background(), bson.M{"phone": phone}).Decode(&admin); err != nil {
 		return nil, err
 	}
 	return &admin, nil
