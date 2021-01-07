@@ -1,0 +1,15 @@
+package constants
+
+// AdminRole is the role type of admin
+type AdminRole string
+
+const (
+	// SuperAdmin has all sorts of access
+	SuperAdmin AdminRole = "Super Admin"
+	// Admin has all access exepet admin creation
+	Admin AdminRole = "Admin"
+	// Moderator has all access except admin creation and payment
+	Moderator AdminRole = "Moderator"
+	// ZoneManager has zone centric access
+	ZoneManager AdminRole = "Zone Manager"
+)
