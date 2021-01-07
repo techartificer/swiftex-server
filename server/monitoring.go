@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/techartificer/swiftex/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -63,12 +63,11 @@ func echoMonitoring() echo.MiddlewareFunc {
 				TimeTaken: timeTaken,
 				CreatedAt: time.Now().UTC(),
 			}
-
 			// db := database.DB()
 			// if err := db.Table(l.TableName()).Create(&l).Error; err != nil {
 			// 	logger.Log.Errorln(err)
 			// }
-			log.Printf("%+v", l)
+			logger.Log.Printf("%+v", l)
 			return nil
 		}
 	}

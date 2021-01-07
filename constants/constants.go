@@ -13,3 +13,10 @@ const (
 	// ZoneManager has zone centric access
 	ZoneManager AdminRole = "Zone Manager"
 )
+
+const (
+	// Active status: user can access
+	Active string = "Active"
+	// Deactive status: user can not access
+	Deactive string = "Deactive"
+)
