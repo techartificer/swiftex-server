@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/caffeines/filepile/lib"
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/constants/codes"
@@ -22,6 +23,7 @@ import (
 // RegisterAuthRoutes initialize all auth related routes
 func RegisterAuthRoutes(endpoint *echo.Group) {
 	endpoint.POST("/admin/login/", adminLogin)
+	endpoint.DELETE("/logout/", logout)
 }
 
 func adminLogin(ctx echo.Context) error {
@@ -95,5 +97,36 @@ func adminLogin(ctx echo.Context) error {
 	}
 	resp.Status = http.StatusOK
 	resp.Data = result
+	return resp.Send(ctx)
+}
+
+func logout(ctx echo.Context) error {
+	resp := response.Response{}
+	token, err := jwt.ParseRefreshToken(ctx)
+	if err != nil {
+		resp.Title = "Invalid token data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.BearerTokenGiven
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	sessionRepo := data.NewSessionRepo()
+	db := database.GetDB()
+	if err := sessionRepo.Logout(db, token); err != nil {
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "You are already logged out"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.RefreshTokenNotFound
+			resp.Errors = lib.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Logout failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Status = http.StatusOK
+	resp.Title = "Logout successful"
 	return resp.Send(ctx)
 }
