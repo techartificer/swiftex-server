@@ -32,7 +32,7 @@ func adminLogin(ctx echo.Context) error {
 	resp := response.Response{}
 	body, err := validators.ValidateLogin(ctx)
 	if err != nil {
-		logger.Log.Errorln(err)
+		logger.Errorln(err)
 		resp.Title = "Invalid login request data"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.InvalidRegisterData
@@ -43,7 +43,7 @@ func adminLogin(ctx echo.Context) error {
 	adminRepo := data.NewAdminRepo()
 	admin, err := adminRepo.FindByUsername(db, body.Phone)
 	if err != nil {
-		logger.Log.Errorln(err)
+		logger.Errorln(err)
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Admin not found"
 			resp.Status = http.StatusNotFound
@@ -66,7 +66,7 @@ func adminLogin(ctx echo.Context) error {
 	}
 	signedToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
 	if err != nil {
-		logger.Log.Infoln(err)
+		logger.Errorln(err)
 
 		resp.Title = "Failed to sign auth token"
 		resp.Status = http.StatusInternalServerError
@@ -84,7 +84,7 @@ func adminLogin(ctx echo.Context) error {
 	}
 	sessRepo := data.NewSessionRepo()
 	if err = sessRepo.CreateSession(db, sess); err != nil {
-		logger.Log.Infoln(err)
+		logger.Errorln(err)
 		resp.Title = "User login failed"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed
@@ -147,7 +147,6 @@ func refreshToken(ctx echo.Context) error {
 	sessionRepo := data.NewSessionRepo()
 	splittedToken := strings.Split(token, ".")
 	userID, err := primitive.ObjectIDFromHex(splittedToken[1])
-	logger.Log.Println(token, userID)
 	if err != nil {
 		resp.Title = "Invalid refresh token"
 		resp.Status = http.StatusInternalServerError
@@ -158,7 +157,7 @@ func refreshToken(ctx echo.Context) error {
 	adminRepo := data.NewAdminRepo()
 	admin, err := adminRepo.FindByID(db, userID)
 	if err != nil {
-		logger.Log.Errorln(err)
+		logger.Errorln(err)
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Admin not found"
 			resp.Status = http.StatusNotFound

@@ -26,16 +26,16 @@ func Start() {
 	}
 
 	go func() {
-		logger.Log.Println("Http server has been started on", addr)
+		logger.Infoln("Http server has been started on", addr)
 		if err := httpServer.ListenAndServe(); err != nil {
-			logger.Log.Errorln("Failed to start http server,", err)
+			logger.Errorln("Failed to start http server,", err)
 		}
 	}()
 	<-stop
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Log.Errorln("Http server couldn't shutdown gracefully", err)
+		logger.Errorln("Http server couldn't shutdown gracefully", err)
 	}
-	logger.Log.Infoln("Http server has been shutdown gracefully")
+	logger.Infoln("Http server has been shutdown gracefully")
 }

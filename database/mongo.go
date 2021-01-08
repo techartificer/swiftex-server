@@ -28,7 +28,7 @@ func ConnectMongo() error {
 	if err := instance.Ping(ctx, readpref.Primary()); err != nil {
 		return err
 	}
-	logger.Log.Println("Successfully connected to MongoDB")
+	logger.Infoln("Successfully connected to MongoDB")
 	return nil
 }
 

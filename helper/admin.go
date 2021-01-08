@@ -18,7 +18,7 @@ func CreateAdmin() {
 	adminRepo := data.NewAdminRepo()
 	hash, err := password.HashPassword("@sadat642")
 	if err != nil {
-		logger.Log.Errorln(err)
+		logger.Errorln(err)
 		return
 	}
 	admin := &models.Admin{
@@ -32,8 +32,8 @@ func CreateAdmin() {
 		CreatedAt: time.Now().UTC(),
 	}
 	if err := adminRepo.Create(db, admin); err != nil {
-		logger.Log.Errorln(err)
+		logger.Errorln(err)
 		return
 	}
-	logger.Log.Infoln("Admin created successfully")
+	logger.Infoln("Admin created successfully")
 }
