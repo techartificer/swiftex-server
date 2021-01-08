@@ -2,14 +2,15 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/caffeines/filepile/lib"
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/errors"
 	"github.com/techartificer/swiftex/lib/jwt"
 	"github.com/techartificer/swiftex/lib/password"
 	"github.com/techartificer/swiftex/lib/response"
@@ -24,6 +25,7 @@ import (
 func RegisterAuthRoutes(endpoint *echo.Group) {
 	endpoint.POST("/admin/login/", adminLogin)
 	endpoint.DELETE("/logout/", logout)
+	endpoint.PATCH("/refresh-token/", refreshToken)
 }
 
 func adminLogin(ctx echo.Context) error {
@@ -75,7 +77,7 @@ func adminLogin(ctx echo.Context) error {
 	sess := &models.Session{
 		ID:           primitive.NewObjectID(),
 		UserID:       admin.ID,
-		RefreshToken: jwt.NewRefresToken(),
+		RefreshToken: jwt.NewRefresToken(admin.ID),
 		AccessToken:  signedToken,
 		CreatedAt:    time.Now().UTC(),
 		ExpiresOn:    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
@@ -117,7 +119,7 @@ func logout(ctx echo.Context) error {
 			resp.Title = "You are already logged out"
 			resp.Status = http.StatusNotFound
 			resp.Code = codes.RefreshTokenNotFound
-			resp.Errors = lib.NewError(err.Error())
+			resp.Errors = errors.NewError(err.Error())
 			return resp.Send(ctx)
 		}
 		resp.Title = "Logout failed"
@@ -128,5 +130,72 @@ func logout(ctx echo.Context) error {
 	}
 	resp.Status = http.StatusOK
 	resp.Title = "Logout successful"
+	return resp.Send(ctx)
+}
+
+func refreshToken(ctx echo.Context) error {
+	resp := response.Response{}
+	token, err := jwt.ParseRefreshToken(ctx)
+	if err != nil {
+		resp.Title = "Token parsing failed"
+		resp.Errors = err
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.UserSignUpDataInvalid
+		return resp.Send(ctx)
+	}
+	db := database.GetDB()
+	sessionRepo := data.NewSessionRepo()
+	splittedToken := strings.Split(token, ".")
+	userID, err := primitive.ObjectIDFromHex(splittedToken[1])
+	logger.Log.Println(token, userID)
+	if err != nil {
+		resp.Title = "Invalid refresh token"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.TokenRefreshFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	adminRepo := data.NewAdminRepo()
+	admin, err := adminRepo.FindByID(db, userID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Admin not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.AdminNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	accessToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
+	if err != nil {
+		resp.Title = "Failed to sign auth token"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.TokenRefreshFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	sess, err := sessionRepo.UpdateSession(db, token, accessToken, userID)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Refresh token not found or expired"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.RefreshTokenNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Token refresh failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = sess
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

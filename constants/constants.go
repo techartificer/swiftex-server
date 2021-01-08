@@ -20,3 +20,8 @@ const (
 	// Deactive status: user can not access
 	Deactive string = "Deactive"
 )
+const (
+	UserScope string = "user"
+	Phone     string = "phone"
+	UserID    string = "userId"
+)

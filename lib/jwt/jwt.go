@@ -20,6 +20,8 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+const NoPadding rune = -1
+
 func BuildJWTToken(phone, scope, id string) (string, error) {
 	log.Println(config.GetJWT().TTL)
 	claims := Claims{
@@ -35,10 +37,13 @@ func BuildJWTToken(phone, scope, id string) (string, error) {
 	return token.SignedString([]byte(config.GetJWT().Secret))
 }
 
-func NewRefresToken() string {
-	token := fmt.Sprintf("%d_%s", time.Now().Unix(), primitive.NewObjectID())
-	return base64.StdEncoding.EncodeToString([]byte(token))
+func NewRefresToken(userID primitive.ObjectID) string {
+	now := fmt.Sprintf("%d", time.Now().Unix())
+	time := base64.StdEncoding.WithPadding(NoPadding).EncodeToString([]byte(now))
+	token := fmt.Sprintf("%s.%s.%s", time, userID.Hex(), primitive.NewObjectID().Hex())
+	return token
 }
+
 func extractTokenFromHeader(ctx echo.Context) string {
 	tokenWithBearer := ctx.Request().Header.Get("Authorization")
 	token := strings.Replace(tokenWithBearer, "Bearer", "", -1)
@@ -64,10 +69,9 @@ func ExtractAndValidateToken(ctx echo.Context) (*Claims, *jwt.Token, error) {
 }
 
 func ParseRefreshToken(ctx echo.Context) (string, error) {
-	refresh := ctx.Request().Header.Get("RefreshToken")
-	refreshWithToken := strings.Split(refresh, " ")
-	if len(refreshWithToken) != 2 {
+	refreshToken := ctx.Request().Header.Get("RefreshToken")
+	if refreshToken == "" {
 		return "", errors.NewError("Refresh token not found")
 	}
-	return refreshWithToken[1], nil
+	return refreshToken, nil
 }

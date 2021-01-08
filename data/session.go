@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/caffeines/filepile/lib"
 	"github.com/techartificer/swiftex/config"
+	"github.com/techartificer/swiftex/lib/jwt"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SessionRepository interface {
 	CreateSession(db *mongo.Database, sess *models.Session) error
-	UpdateSession(db *mongo.Database, token, accessToken string) (*models.Session, error)
+	UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error)
 	Logout(db *mongo.Database, token string) error
 }
 
@@ -36,17 +37,15 @@ func (s *SessionRepoImpl) CreateSession(db *mongo.Database, sess *models.Session
 	return err
 }
 
-func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken string) (*models.Session, error) {
+func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error) {
 	sess := &models.Session{}
-	filter := bson.D{{"refreshToken", token}, {"expiresOn", bson.D{
-		{"$gt", time.Now().Unix()},
-	}}}
+	filter := bson.D{{"refreshToken", token}}
 	after := options.After
 	opt := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
 	update := bson.D{{"$set", bson.M{
-		"refreshToken": lib.NewRefresToken(),
+		"refreshToken": jwt.NewRefresToken(userID),
 		"accesstoken":  accessToken,
 		"createdAt":    time.Now().UTC(),
 		"expiresOn":    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
