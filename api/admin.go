@@ -7,6 +7,7 @@ import (
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/errors"
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/validators"
@@ -34,6 +35,13 @@ func createAdmin(ctx echo.Context) error {
 	adminRepo := data.NewAdminRepo()
 	if err := adminRepo.Create(db, admin); err != nil {
 		logger.Errorln(err)
+		if errors.IsMongoDupError(err) {
+			resp.Title = "Admin already exist"
+			resp.Status = http.StatusConflict
+			resp.Code = codes.AdminAlreadyExist
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 		resp.Title = "Something went wrong"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed

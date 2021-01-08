@@ -28,7 +28,7 @@ func main() {
 	defer func() {
 		err := database.DisconnectMongo()
 		if err != nil {
-			logger.Errorln(err)
+			logger.Log.Errorln(err)
 		}
 	}()
 	server.Start()

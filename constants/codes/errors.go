@@ -13,6 +13,7 @@ const (
 	AdminNotFound             ErrorCode = "404001"
 	RefreshTokenNotFound      ErrorCode = "404002"
 	BearerTokenNotFound       ErrorCode = "404003"
+	AdminAlreadyExist         ErrorCode = "409001"
 	DatabaseQueryFailed       ErrorCode = "500001"
 	UserLoginFailed           ErrorCode = "500002"
 	TokenRefreshFailed        ErrorCode = "500003"
