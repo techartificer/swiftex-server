@@ -8,15 +8,16 @@ import (
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
 	"github.com/techartificer/swiftex/lib/errors"
+	"github.com/techartificer/swiftex/lib/password"
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
+	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
 )
 
 // RegisterAdminRoutes initialize all auth related routes
 func RegisterAdminRoutes(endpoint *echo.Group) {
-	// endpoint.POST("/add/", createAdmin, middlewares.JWTAuth())
-	endpoint.POST("/add/", createAdmin)
+	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 }
 
 func createAdmin(ctx echo.Context) error {
@@ -30,8 +31,17 @@ func createAdmin(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+	hash, err := password.HashPassword(admin.Password)
+	if err != nil {
+		logger.Errorln(err)
+		resp.Title = "Password hash failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.PasswordHashFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	admin.Password = hash
 	db := database.GetDB()
-	logger.Infoln(admin)
 	adminRepo := data.NewAdminRepo()
 	if err := adminRepo.Create(db, admin); err != nil {
 		logger.Errorln(err)

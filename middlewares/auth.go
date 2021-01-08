@@ -28,13 +28,29 @@ func JWTAuth() echo.MiddlewareFunc {
 			if err != nil {
 				resp.Title = "Something went wrong"
 				resp.Status = http.StatusInternalServerError
-				resp.Code = codes.DatabaseQueryFailed
+				resp.Code = codes.SomethingWentWrong
 				resp.Errors = err
 				return resp.Send(ctx)
 			}
 			ctx.Set(constants.UserID, userID)
-			ctx.Set(constants.UserScope, claims.Audience)
+			ctx.Set(constants.Role, claims.Audience)
 			ctx.Set(constants.Phone, claims.Phone)
+			return next(ctx)
+		}
+	}
+}
+
+func IsSuperAdmin() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			resp := response.Response{}
+			role := ctx.Get(constants.Role)
+			if role != string(constants.SuperAdmin) {
+				resp.Status = http.StatusForbidden
+				resp.Code = codes.NotSuperAdmin
+				resp.Title = "You are not super admin"
+				return resp.Send(ctx)
+			}
 			return next(ctx)
 		}
 	}

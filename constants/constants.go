@@ -23,7 +23,7 @@ const (
 	Deactive string = "Deactive"
 )
 const (
-	UserScope string = "user"
-	Phone     string = "phone"
-	UserID    string = "userId"
+	Role   string = "role"
+	Phone  string = "phone"
+	UserID string = "userId"
 )
