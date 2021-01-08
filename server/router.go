@@ -44,4 +44,6 @@ func registerV1Routes() {
 	v1 := router.Group("/v1")
 	auth := v1.Group("/auth")
 	api.RegisterAuthRoutes(auth)
+	admin := v1.Group("/admin")
+	api.RegisterAdminRoutes(admin)
 }

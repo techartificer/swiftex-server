@@ -14,6 +14,8 @@ const (
 	ZoneManager AdminRole = "Zone Manager"
 )
 
+var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}
+
 const (
 	// Active status: user can access
 	Active string = "Active"
