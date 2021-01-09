@@ -65,9 +65,9 @@ func echoMonitoring() echo.MiddlewareFunc {
 			}
 			// db := database.DB()
 			// if err := db.Table(l.TableName()).Create(&l).Error; err != nil {
-			// 	logger.Log.Errorln(err)
+			// 	logger.Log.Log.Errorln(err)
 			// }
-			logger.Printf("%+v", l)
+			logger.Log.Printf("%+v", l)
 			return nil
 		}
 	}

@@ -3,7 +3,6 @@ package jwt
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -23,7 +22,6 @@ type Claims struct {
 const NoPadding rune = -1
 
 func BuildJWTToken(phone, scope, id string) (string, error) {
-	log.Println(config.GetJWT().TTL)
 	claims := Claims{
 		UserID: id,
 		Phone:  phone,

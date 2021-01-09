@@ -32,7 +32,7 @@ func adminLogin(ctx echo.Context) error {
 	resp := response.Response{}
 	body, err := validators.ValidateLogin(ctx)
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		resp.Title = "Invalid login request data"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.InvalidRegisterData
@@ -43,7 +43,7 @@ func adminLogin(ctx echo.Context) error {
 	adminRepo := data.NewAdminRepo()
 	admin, err := adminRepo.FindByUsername(db, body.Phone)
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Admin not found"
 			resp.Status = http.StatusNotFound
@@ -66,7 +66,7 @@ func adminLogin(ctx echo.Context) error {
 	}
 	signedToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 
 		resp.Title = "Failed to sign auth token"
 		resp.Status = http.StatusInternalServerError
@@ -84,7 +84,7 @@ func adminLogin(ctx echo.Context) error {
 	}
 	sessRepo := data.NewSessionRepo()
 	if err = sessRepo.CreateSession(db, sess); err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		resp.Title = "User login failed"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed
@@ -106,7 +106,7 @@ func logout(ctx echo.Context) error {
 	resp := response.Response{}
 	token, err := jwt.ParseRefreshToken(ctx)
 	if err != nil {
-		resp.Title = "Invalid token data"
+		resp.Title = "You are already logged out"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.BearerTokenGiven
 		resp.Errors = err
@@ -157,7 +157,7 @@ func refreshToken(ctx echo.Context) error {
 	adminRepo := data.NewAdminRepo()
 	admin, err := adminRepo.FindByID(db, userID)
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Admin not found"
 			resp.Status = http.StatusNotFound
@@ -182,7 +182,7 @@ func refreshToken(ctx echo.Context) error {
 	sess, err := sessionRepo.UpdateSession(db, token, accessToken, userID)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			resp.Title = "Refresh token not found or expired"
+			resp.Title = "You are logged out"
 			resp.Status = http.StatusNotFound
 			resp.Code = codes.RefreshTokenNotFound
 			resp.Errors = errors.NewError(err.Error())

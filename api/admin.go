@@ -24,7 +24,7 @@ func createAdmin(ctx echo.Context) error {
 	resp := response.Response{}
 	admin, err := validators.ValidateAddAdmin(ctx)
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		resp.Title = "Invalid add admin request data"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.InvalidRegisterData
@@ -33,7 +33,7 @@ func createAdmin(ctx echo.Context) error {
 	}
 	hash, err := password.HashPassword(admin.Password)
 	if err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		resp.Title = "Password hash failed"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.PasswordHashFailed
@@ -44,7 +44,7 @@ func createAdmin(ctx echo.Context) error {
 	db := database.GetDB()
 	adminRepo := data.NewAdminRepo()
 	if err := adminRepo.Create(db, admin); err != nil {
-		logger.Errorln(err)
+		logger.Log.Errorln(err)
 		if errors.IsMongoDupError(err) {
 			resp.Title = "Admin already exist"
 			resp.Status = http.StatusConflict
