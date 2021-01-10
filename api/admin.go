@@ -13,11 +13,13 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // RegisterAdminRoutes initialize all auth related routes
 func RegisterAdminRoutes(endpoint *echo.Group) {
 	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
+	endpoint.PATCH("/update/:adminId/", updateAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 }
 
 func createAdmin(ctx echo.Context) error {
@@ -60,5 +62,40 @@ func createAdmin(ctx echo.Context) error {
 	}
 	resp.Status = http.StatusCreated
 	resp.Data = admin
+	return resp.Send(ctx)
+}
+
+func updateAdmin(ctx echo.Context) error {
+	resp := response.Response{}
+	ID := ctx.Param("adminId")
+	body, err := validators.ValidateAdminUpdate(ctx)
+	db := database.GetDB()
+	adminRepo := data.NewAdminRepo()
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid admin update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidRegisterData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	admin, err := adminRepo.UpdateAdminByID(db, body, ID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Admin not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.AdminNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Admin update failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = admin
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

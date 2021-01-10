@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ReqLogin holds login request data
+// ReqAdminAdd holds admin add request data
 type ReqAdminAdd struct {
 	Phone    string              `json:"phone,omitempty" validate:"required"`
 	Name     string              `json:"name,omitempty" validate:"required"`
@@ -19,7 +19,17 @@ type ReqAdminAdd struct {
 	Password string              `json:"password,omitempty" validate:"required,min=6,max=26"`
 }
 
-// ValidateLogin returns request body or error
+func isValidRole(fl validator.FieldLevel) bool {
+	isFound := false
+	for _, v := range constants.Roles {
+		if string(v) == fl.Field().String() {
+			isFound = true
+		}
+	}
+	return isFound
+}
+
+// ValidateAddAdmin returns admin or error
 func ValidateAddAdmin(ctx echo.Context) (*models.Admin, error) {
 	v.RegisterValidation("isValidRole", isValidRole)
 	body := ReqAdminAdd{}
@@ -42,12 +52,34 @@ func ValidateAddAdmin(ctx echo.Context) (*models.Admin, error) {
 	return admin, nil
 }
 
-func isValidRole(fl validator.FieldLevel) bool {
+// ReqAdminUpdate holds status update data request data
+type ReqAdminUpdate struct {
+	Phone  string              `json:"phone,omitempty"  bson:"phone,omitempty"`
+	Name   string              `json:"name,omitempty" bson:"name,omitempty"`
+	Email  *string             `json:"email,omitempty" validate:"omitempty,email" bson:"email,omitempty"`
+	Role   constants.AdminRole `json:"role,omitempty" validate:"omitempty,isValidRole" bson:"role,omitempty"`
+	Status string              `json:"status,omitempty" validate:"omitempty,isValidStatus" bson:"status,omitempty"`
+}
+
+func isValidStatus(fl validator.FieldLevel) bool {
 	isFound := false
-	for _, v := range constants.Roles {
+	for _, v := range constants.AllStatus {
 		if string(v) == fl.Field().String() {
 			isFound = true
 		}
 	}
 	return isFound
+}
+
+func ValidateAdminUpdate(ctx echo.Context) (*ReqAdminUpdate, error) {
+	v.RegisterValidation("isValidRole", isValidRole)
+	v.RegisterValidation("isValidStatus", isValidStatus)
+	body := ReqAdminUpdate{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	return &body, nil
 }

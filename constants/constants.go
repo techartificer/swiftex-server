@@ -22,6 +22,9 @@ const (
 	// Deactive status: user can not access
 	Deactive string = "Deactive"
 )
+
+var AllStatus = []string{Active, Deactive}
+
 const (
 	Role   string = "role"
 	Phone  string = "phone"

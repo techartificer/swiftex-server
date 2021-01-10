@@ -8,6 +8,7 @@ import (
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/lib/jwt"
 	"github.com/techartificer/swiftex/lib/response"
+	"github.com/techartificer/swiftex/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -15,9 +16,9 @@ func JWTAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			resp := response.Response{}
-
 			claims, _, err := jwt.ExtractAndValidateToken(ctx)
 			if err != nil {
+				logger.Log.Errorln(err)
 				resp.Status = http.StatusUnauthorized
 				resp.Code = codes.InvalidAuthorizationToken
 				resp.Title = "Unauthorized request"
@@ -26,6 +27,7 @@ func JWTAuth() echo.MiddlewareFunc {
 			}
 			userID, err := primitive.ObjectIDFromHex(claims.UserID)
 			if err != nil {
+				logger.Log.Errorln(err)
 				resp.Title = "Something went wrong"
 				resp.Status = http.StatusInternalServerError
 				resp.Code = codes.SomethingWentWrong
