@@ -94,7 +94,7 @@ func adminLogin(ctx echo.Context) error {
 	result := map[string]interface{}{
 		"accessToken":  sess.AccessToken,
 		"refreshToken": sess.RefreshToken,
-		"expireOn":     sess.ExpiresOn,
+		"expiresOn":    sess.ExpiresOn,
 		"permission":   admin.Role,
 	}
 	resp.Status = http.StatusOK

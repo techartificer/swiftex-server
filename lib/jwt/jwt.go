@@ -28,7 +28,7 @@ func BuildJWTToken(phone, scope, id string) (string, error) {
 		StandardClaims: jwt.StandardClaims{
 			Audience:  scope,
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Minute * time.Duration(config.GetJWT().TTL)).Unix(),
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(config.GetJWT().TTL)).Unix(),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

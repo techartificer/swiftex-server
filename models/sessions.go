@@ -13,7 +13,7 @@ type Session struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserID       primitive.ObjectID `bson:"userId,omitempty" json:"userId"`
 	RefreshToken string             `bson:"refreshToken,omitempty" json:"refreshToken"`
-	AccessToken  string             `bson:"accesstoken,omitempty" json:"accesstoken"`
+	AccessToken  string             `bson:"accessToken,omitempty" json:"accessToken"`
 	CreatedAt    time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 	ExpiresOn    time.Time          `bson:"expiresOn,omitempty" json:"expiresOn"`
 }

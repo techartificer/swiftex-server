@@ -46,7 +46,7 @@ func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken s
 	}
 	update := bson.D{{"$set", bson.M{
 		"refreshToken": jwt.NewRefresToken(userID),
-		"accesstoken":  accessToken,
+		"accessToken":  accessToken,
 		"createdAt":    time.Now().UTC(),
 		"expiresOn":    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
 	}}}
