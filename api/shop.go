@@ -19,6 +19,7 @@ import (
 
 func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", create, middlewares.JWTAuth())
+	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth())
 }
 
 func create(ctx echo.Context) error {
@@ -54,5 +55,24 @@ func create(ctx echo.Context) error {
 	}
 	resp.Data = shop
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+func myShops(ctx echo.Context) error {
+	resp := response.Response{}
+	db := database.GetDB()
+	shopRepo := data.NewShopRepo()
+	ownerID := ctx.Get(constants.UserID).(primitive.ObjectID)
+	shops, err := shopRepo.ShopsByOwnerId(db, ownerID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Can not fetch data"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = shops
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
