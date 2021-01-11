@@ -36,5 +36,8 @@ func InitializeIndex(db *mongo.Database) error {
 	if err := initMerchantIndex(db); err != nil {
 		return err
 	}
+	if err := initShopIndex(db); err != nil {
+		return err
+	}
 	return nil
 }

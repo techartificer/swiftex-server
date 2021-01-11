@@ -19,12 +19,12 @@ type Shop struct {
 	PickupAddress string               `bson:"pickupAddress,omitempty" json:"pickupAddress"`
 	PickupArea    string               `bson:"pickupArea,omitempty" json:"pickupArea"`
 	DeliveryZone  string               `bson:"deliveryZone,omitempty" json:"deliveryZone"`
-	Coupon        string               `bson:"coupon,omitempty" json:"coupon"`
+	Coupon        string               `bson:"coupon,omitempty" json:"coupon,omitempty"`
 	Image         string               `bson:"image,omitempty" json:"image,omitempty"`
 	Status        string               `bson:"status,omitempty" json:"status"`
 	Owner         primitive.ObjectID   `bson:"owner,omitempty" json:"owner"`
 	FBPage        string               `bson:"fbPage,omitempty" json:"fbPage"`
-	Moderators    []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators"`
+	Moderators    []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators,omitempty"`
 	CreatedAt     time.Time            `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdateAt      time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
 }

@@ -48,4 +48,6 @@ func registerV1Routes() {
 	api.RegisterAdminRoutes(admin)
 	merchant := v1.Group("/merchant")
 	api.RegisterMerchantRoutes(merchant)
+	shop := v1.Group("/shop")
+	api.RegisterShopRoutes(shop)
 }
