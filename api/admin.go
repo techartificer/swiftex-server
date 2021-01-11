@@ -14,6 +14,7 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,6 +23,7 @@ func RegisterAdminRoutes(endpoint *echo.Group) {
 	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 	endpoint.PATCH("/update/:adminId/", updateAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 	endpoint.GET("/all/", allAdmins, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
+	endpoint.GET("/profile/", profile, middlewares.JWTAuth())
 }
 
 func createAdmin(ctx echo.Context) error {
@@ -126,6 +128,32 @@ func allAdmins(ctx echo.Context) error {
 		return resp.Send(ctx)
 	}
 	resp.Data = admins
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func profile(ctx echo.Context) error {
+	resp := response.Response{}
+	db := database.GetDB()
+	userID := ctx.Get(constants.UserID).(primitive.ObjectID)
+	adminRepo := data.NewAdminRepo()
+	admin, err := adminRepo.FindByID(db, userID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Admin not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.AdminNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = admin
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
