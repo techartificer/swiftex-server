@@ -21,6 +21,7 @@ import (
 func RegisterAdminRoutes(endpoint *echo.Group) {
 	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 	endpoint.PATCH("/update/:adminId/", updateAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
+	endpoint.GET("/all/", allAdmins, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
 }
 
 func createAdmin(ctx echo.Context) error {
@@ -107,6 +108,24 @@ func updateAdmin(ctx echo.Context) error {
 		}
 	}
 	resp.Data = admin
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func allAdmins(ctx echo.Context) error {
+	resp := response.Response{}
+	db := database.GetDB()
+	adminRepo := data.NewAdminRepo()
+	admins, err := adminRepo.AdminList(db)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Can not fetch data"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = admins
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

@@ -17,6 +17,7 @@ type AdminRepository interface {
 	FindByID(db *mongo.Database, ID primitive.ObjectID) (*models.Admin, error)
 	FindByUsername(db *mongo.Database, phone string) (*models.Admin, error)
 	UpdateAdminByID(db *mongo.Database, data *validators.ReqAdminUpdate, ID string) (*models.Admin, error)
+	AdminList(db *mongo.Database) (*[]models.Admin, error)
 }
 
 type adminRepositoryImpl struct{}
@@ -72,4 +73,19 @@ func (a *adminRepositoryImpl) UpdateAdminByID(db *mongo.Database, data *validato
 	update := bson.D{{"$set", data}}
 	err = adminCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(admin)
 	return admin, err
+}
+
+func (a *adminRepositoryImpl) AdminList(db *mongo.Database) (*[]models.Admin, error) {
+	admin := &models.Admin{}
+	adminCollection := db.Collection(admin.CollectionName())
+	query := bson.M{}
+	cursor, err := adminCollection.Find(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	var admins []models.Admin
+	if err = cursor.All(context.Background(), &admins); err != nil {
+		return nil, err
+	}
+	return &admins, nil
 }
