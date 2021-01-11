@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/config"
+	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
@@ -57,6 +58,14 @@ func adminLogin(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+
+	if admin.Status != constants.Active {
+		resp.Title = "Admin status not active"
+		resp.Status = http.StatusForbidden
+		resp.Code = codes.StatusNotActive
+		return resp.Send(ctx)
+	}
+
 	if ok := password.CheckPasswordHash(body.Password, admin.Password); !ok {
 		resp.Title = "Phone number or password incorrect"
 		resp.Status = http.StatusUnauthorized
@@ -67,7 +76,6 @@ func adminLogin(ctx echo.Context) error {
 	signedToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
 	if err != nil {
 		logger.Log.Errorln(err)
-
 		resp.Title = "Failed to sign auth token"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.UserLoginFailed

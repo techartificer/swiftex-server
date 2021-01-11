@@ -17,27 +17,28 @@ type SessionRepository interface {
 	CreateSession(db *mongo.Database, sess *models.Session) error
 	UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error)
 	Logout(db *mongo.Database, token string) error
+	RemoveSessionsByUserID(db *mongo.Database, userID string) (*mongo.DeleteResult, error)
 }
 
-type SessionRepoImpl struct{}
+type sessionRepoImpl struct{}
 
 var sessionRepo SessionRepository
 
 func NewSessionRepo() SessionRepository {
 	if sessionRepo == nil {
-		sessionRepo = &SessionRepoImpl{}
+		sessionRepo = &sessionRepoImpl{}
 	}
 	return sessionRepo
 }
 
-func (s *SessionRepoImpl) CreateSession(db *mongo.Database, sess *models.Session) error {
+func (s *sessionRepoImpl) CreateSession(db *mongo.Database, sess *models.Session) error {
 	collectionName := sess.CollectionName()
 	sessionCollection := db.Collection(collectionName)
 	_, err := sessionCollection.InsertOne(context.Background(), sess)
 	return err
 }
 
-func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error) {
+func (s *sessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error) {
 	sess := &models.Session{}
 	filter := bson.D{{"refreshToken", token}}
 	after := options.After
@@ -56,11 +57,24 @@ func (s *SessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken s
 	return sess, err
 }
 
-func (s *SessionRepoImpl) Logout(db *mongo.Database, token string) error {
+func (s *sessionRepoImpl) Logout(db *mongo.Database, token string) error {
 	sess := &models.Session{}
 	collectionName := sess.CollectionName()
 	sessionCollection := db.Collection(collectionName)
 	filter := bson.D{{"refreshToken", token}}
 	err := sessionCollection.FindOneAndDelete(context.Background(), filter).Decode(&sess)
 	return err
+}
+
+func (s *sessionRepoImpl) RemoveSessionsByUserID(db *mongo.Database, userID string) (*mongo.DeleteResult, error) {
+	_userID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	sess := &models.Session{}
+	collectionName := sess.CollectionName()
+	sessionCollection := db.Collection(collectionName)
+	filter := bson.D{{"userId", _userID}}
+	res, err := sessionCollection.DeleteMany(context.Background(), filter)
+	return res, err
 }

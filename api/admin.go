@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
@@ -94,6 +95,16 @@ func updateAdmin(ctx echo.Context) error {
 		resp.Code = codes.DatabaseQueryFailed
 		resp.Errors = err
 		return resp.Send(ctx)
+	}
+	sessionRepo := data.NewSessionRepo()
+	if body.Status == constants.Deactive {
+		if _, err := sessionRepo.RemoveSessionsByUserID(db, ID); err != nil {
+			resp.Title = "Admin update failed"
+			resp.Status = http.StatusInternalServerError
+			resp.Code = codes.DatabaseQueryFailed
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 	}
 	resp.Data = admin
 	resp.Status = http.StatusOK
