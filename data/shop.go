@@ -12,6 +12,7 @@ import (
 type ShopRepository interface {
 	Create(db *mongo.Database, shop *models.Shop) error
 	ShopsByOwnerId(db *mongo.Database, owner primitive.ObjectID) (*[]models.Shop, error)
+	ShopByID(db *mongo.Database, id string) (*models.Shop, error)
 }
 
 type shopRepositoryImpl struct{}
@@ -44,4 +45,16 @@ func (a *shopRepositoryImpl) ShopsByOwnerId(db *mongo.Database, owner primitive.
 		return nil, err
 	}
 	return &shops, nil
+}
+
+func (a *shopRepositoryImpl) ShopByID(db *mongo.Database, id string) (*models.Shop, error) {
+	_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	shop := &models.Shop{}
+	shopCollection := db.Collection(shop.CollectionName())
+	filter := bson.M{"_id": _id}
+	err = shopCollection.FindOne(context.Background(), filter).Decode(shop)
+	return shop, err
 }

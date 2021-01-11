@@ -20,6 +20,7 @@ import (
 func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", create, middlewares.JWTAuth())
 	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth())
+	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(), middlewares.IsShopOwner())
 }
 
 func create(ctx echo.Context) error {
@@ -73,6 +74,14 @@ func myShops(ctx echo.Context) error {
 		return resp.Send(ctx)
 	}
 	resp.Data = shops
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func shopByID(ctx echo.Context) error {
+	resp := response.Response{}
+	shop := ctx.Get("shop")
+	resp.Data = shop
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
