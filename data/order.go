@@ -6,10 +6,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// OrderStatus holds order status data
 type OrderStatus struct {
-	Text      string             `bson:"text,omitempty" json:"text"`
-	ChangedBy primitive.ObjectID `bson:"changedBy,omitempty" json:"changedBy"`
-	Time      time.Time          `bson:"time,omitempty" json:"time"`
+	Text          string             `bson:"text,omitempty" json:"text"`
+	DeleveryBoyID primitive.ObjectID `bson:"deleveryBoyId,omitempty" json:"deleveryBoy"`
+	ModeratorID   primitive.ObjectID `bson:"moderatorId,omitempty" json:"moderator"`
+	OwnerID       primitive.ObjectID `bson:"ownerId,omitempty" json:"owner"`
+	AdminID       primitive.ObjectID `bson:"adminId,omitempty" json:"adminId"`
+	Time          time.Time          `bson:"time,omitempty" json:"time"`
 }
 
 // Order holds order data
