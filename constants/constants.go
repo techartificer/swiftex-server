@@ -30,3 +30,5 @@ const (
 	Phone  string = "phone"
 	UserID string = "userId"
 )
+
+const TrackIDSize = 8

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/random"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"github.com/techartificer/swiftex/server"
@@ -11,7 +12,7 @@ import (
 
 func init() {
 	logger.SetupLog()
-
+	random.Initialize()
 	if err := config.LoadConfig(); err != nil {
 		panic(err)
 	}
