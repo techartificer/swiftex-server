@@ -20,7 +20,7 @@ import (
 func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", shopCreate, middlewares.JWTAuth())
 	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth())
-	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(), middlewares.IsShopOwner())
+	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(), middlewares.HasShopAccess())
 }
 
 func shopCreate(ctx echo.Context) error {

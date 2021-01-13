@@ -17,7 +17,7 @@ import (
 )
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
-	endpoint.POST("/create/", orderCreate, middlewares.JWTAuth())
+	endpoint.POST("/create/", orderCreate, middlewares.JWTAuth(), middlewares.HasShopAccess())
 	// endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth())
 }
 
