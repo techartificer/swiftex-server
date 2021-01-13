@@ -6,6 +6,7 @@ type ErrorCode string
 const (
 	InvalidRegisterData       ErrorCode = "400001"
 	UserSignUpDataInvalid     ErrorCode = "400002"
+	InvalidShopCreateData     ErrorCode = "400003"
 	InvalidLoginCredential    ErrorCode = "401001"
 	BearerTokenGiven          ErrorCode = "401002"
 	InvalidAuthorizationToken ErrorCode = "401003"
@@ -19,6 +20,7 @@ const (
 	AdminAlreadyExist         ErrorCode = "409001"
 	MerchantAlreadyExist      ErrorCode = "409002"
 	ShopAlreadyExist          ErrorCode = "409003"
+	OrderAlreadyExist         ErrorCode = "409004"
 	DatabaseQueryFailed       ErrorCode = "500001"
 	UserLoginFailed           ErrorCode = "500002"
 	TokenRefreshFailed        ErrorCode = "500003"

@@ -18,12 +18,12 @@ import (
 )
 
 func RegisterShopRoutes(endpoint *echo.Group) {
-	endpoint.POST("/create/", create, middlewares.JWTAuth())
+	endpoint.POST("/create/", shopCreate, middlewares.JWTAuth())
 	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth())
 	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(), middlewares.IsShopOwner())
 }
 
-func create(ctx echo.Context) error {
+func shopCreate(ctx echo.Context) error {
 	resp := response.Response{}
 	shop, err := validators.ValidateShopCreate(ctx)
 	if err != nil {

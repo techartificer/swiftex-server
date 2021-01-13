@@ -20,7 +20,9 @@ const (
 	// Active status: user can access
 	Active string = "Active"
 	// Deactive status: user can not access
-	Deactive string = "Deactive"
+	Deactive  string = "Deactive"
+	Pending   string = "Pending"
+	Delevered string = "Delevered"
 )
 
 var AllStatus = []string{Active, Deactive}
