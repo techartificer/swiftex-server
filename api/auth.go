@@ -46,7 +46,7 @@ func adminLogin(ctx echo.Context) error {
 	if err != nil {
 		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
-			resp.Title = "Admin not found"
+			resp.Title = "Admin not exist"
 			resp.Status = http.StatusNotFound
 			resp.Code = codes.AdminNotFound
 			resp.Errors = err
@@ -67,7 +67,7 @@ func adminLogin(ctx echo.Context) error {
 	}
 
 	if ok := password.CheckPasswordHash(body.Password, admin.Password); !ok {
-		resp.Title = "Phone number or password incorrect"
+		resp.Title = "Password incorrect"
 		resp.Status = http.StatusUnauthorized
 		resp.Code = codes.InvalidLoginCredential
 		resp.Errors = err
