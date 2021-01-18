@@ -18,9 +18,9 @@ import (
 )
 
 func RegisterShopRoutes(endpoint *echo.Group) {
-	endpoint.POST("/create/", shopCreate, middlewares.JWTAuth())
-	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth())
-	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(), middlewares.HasShopAccess())
+	endpoint.POST("/create/", shopCreate, middlewares.JWTAuth(false))
+	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth(false))
+	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 }
 
 func shopCreate(ctx echo.Context) error {

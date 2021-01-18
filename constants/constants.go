@@ -4,6 +4,11 @@ package constants
 type AdminRole string
 
 const (
+	AdminType    string = "Admin"
+	MerchantType string = "Merchant"
+)
+
+const (
 	// SuperAdmin has all sorts of access
 	SuperAdmin AdminRole = "Super Admin"
 	// Admin has all access exepet admin creation

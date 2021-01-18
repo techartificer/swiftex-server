@@ -14,17 +14,19 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"id"`
-	Phone  string `json:"phone"`
+	UserID      string `json:"id"`
+	Phone       string `json:"phone"`
+	AccountType string `json:"accountType"`
 	jwt.StandardClaims
 }
 
 const NoPadding rune = -1
 
-func BuildJWTToken(phone, scope, id string) (string, error) {
+func BuildJWTToken(phone, scope, id, accountType string) (string, error) {
 	claims := Claims{
-		UserID: id,
-		Phone:  phone,
+		UserID:      id,
+		Phone:       phone,
+		AccountType: accountType,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  scope,
 			IssuedAt:  time.Now().Unix(),

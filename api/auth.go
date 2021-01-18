@@ -25,8 +25,89 @@ import (
 // RegisterAuthRoutes initialize all auth related routes
 func RegisterAuthRoutes(endpoint *echo.Group) {
 	endpoint.POST("/admin/login/", adminLogin)
+	endpoint.POST("/merchant/login/", merchantLogin)
 	endpoint.DELETE("/logout/", logout)
 	endpoint.PATCH("/refresh-token/", refreshToken)
+}
+
+func merchantLogin(ctx echo.Context) error {
+	resp := response.Response{}
+	body, err := validators.ValidateLogin(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid login request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidRegisterData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	db := database.GetDB()
+	merchantRepo := data.NewMerchantRepo()
+	merchant, err := merchantRepo.FindByPhone(db, body.Phone)
+
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "You are not registered"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.AdminNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	if merchant.Status != constants.Active {
+		resp.Title = "Merchant status not active"
+		resp.Status = http.StatusForbidden
+		resp.Code = codes.StatusNotActive
+		return resp.Send(ctx)
+	}
+	if ok := password.CheckPasswordHash(body.Password, merchant.Password); !ok {
+		resp.Title = "Password incorrect"
+		resp.Status = http.StatusUnauthorized
+		resp.Code = codes.InvalidLoginCredential
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	signedToken, err := jwt.BuildJWTToken(merchant.Phone, "Shop Admin", merchant.ID.Hex(), constants.MerchantType)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Failed to sign auth token"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.UserLoginFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	sess := &models.Session{
+		ID:           primitive.NewObjectID(),
+		UserID:       merchant.ID,
+		RefreshToken: jwt.NewRefresToken(merchant.ID),
+		AccessToken:  signedToken,
+		CreatedAt:    time.Now().UTC(),
+		ExpiresOn:    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
+	}
+	sessRepo := data.NewSessionRepo()
+	if err = sessRepo.CreateSession(db, sess); err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "User login failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	result := map[string]interface{}{
+		"accessToken":  sess.AccessToken,
+		"refreshToken": sess.RefreshToken,
+		"expiresOn":    sess.ExpiresOn,
+		"permission":   "Shop Admin",
+	}
+	resp.Status = http.StatusOK
+	resp.Data = result
+	return resp.Send(ctx)
 }
 
 func adminLogin(ctx echo.Context) error {
@@ -73,7 +154,7 @@ func adminLogin(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	signedToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
+	signedToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex(), constants.AdminType)
 	if err != nil {
 		logger.Log.Errorln(err)
 		resp.Title = "Failed to sign auth token"
@@ -179,7 +260,7 @@ func refreshToken(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	accessToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex())
+	accessToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex(), constants.AdminType)
 	if err != nil {
 		resp.Title = "Failed to sign auth token"
 		resp.Status = http.StatusInternalServerError

@@ -20,10 +20,10 @@ import (
 
 // RegisterAdminRoutes initialize all auth related routes
 func RegisterAdminRoutes(endpoint *echo.Group) {
-	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
-	endpoint.PATCH("/update/:adminId/", updateAdmin, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
-	endpoint.GET("/all/", allAdmins, middlewares.JWTAuth(), middlewares.IsSuperAdmin())
-	endpoint.GET("/profile/", profile, middlewares.JWTAuth())
+	endpoint.POST("/add/", createAdmin, middlewares.JWTAuth(true), middlewares.IsSuperAdmin())
+	endpoint.PATCH("/update/:adminId/", updateAdmin, middlewares.JWTAuth(true), middlewares.IsSuperAdmin())
+	endpoint.GET("/all/", allAdmins, middlewares.JWTAuth(true) /*  middlewares.IsSuperAdmin() */)
+	endpoint.GET("/profile/", profile, middlewares.JWTAuth(true))
 }
 
 func createAdmin(ctx echo.Context) error {

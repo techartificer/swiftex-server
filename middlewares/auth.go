@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -12,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func JWTAuth() echo.MiddlewareFunc {
+func JWTAuth(isAdmin bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			resp := response.Response{}
@@ -23,6 +24,13 @@ func JWTAuth() echo.MiddlewareFunc {
 				resp.Code = codes.InvalidAuthorizationToken
 				resp.Title = "Unauthorized request"
 				resp.Errors = err
+				return resp.Send(ctx)
+			}
+			log.Println(claims.AccountType, isAdmin)
+			if isAdmin && claims.AccountType != constants.AdminType {
+				resp.Status = http.StatusUnauthorized
+				resp.Code = codes.InvalidAuthorizationToken
+				resp.Title = "You are not allowed"
 				return resp.Send(ctx)
 			}
 			userID, err := primitive.ObjectIDFromHex(claims.UserID)
