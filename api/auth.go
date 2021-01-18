@@ -73,7 +73,7 @@ func merchantLogin(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	signedToken, err := jwt.BuildJWTToken(merchant.Phone, "Shop Admin", merchant.ID.Hex(), constants.MerchantType)
+	signedToken, err := jwt.BuildJWTToken(merchant.Phone, constants.ShopOwner, merchant.ID.Hex(), constants.MerchantType)
 	if err != nil {
 		logger.Log.Errorln(err)
 		resp.Title = "Failed to sign auth token"
@@ -103,7 +103,7 @@ func merchantLogin(ctx echo.Context) error {
 		"accessToken":  sess.AccessToken,
 		"refreshToken": sess.RefreshToken,
 		"expiresOn":    sess.ExpiresOn,
-		"permission":   "Shop Admin",
+		"permission":   "Owner",
 	}
 	resp.Status = http.StatusOK
 	resp.Data = result
@@ -236,31 +236,23 @@ func refreshToken(ctx echo.Context) error {
 	sessionRepo := data.NewSessionRepo()
 	splittedToken := strings.Split(token, ".")
 	userID, err := primitive.ObjectIDFromHex(splittedToken[1])
-	if err != nil {
+	claims, err := jwt.DecodeToken(ctx)
+	if err != nil || userID.Hex() != claims.UserID {
 		resp.Title = "Invalid refresh token"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.TokenRefreshFailed
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	adminRepo := data.NewAdminRepo()
-	admin, err := adminRepo.FindByID(db, userID)
 	if err != nil {
 		logger.Log.Errorln(err)
-		if err == mongo.ErrNoDocuments {
-			resp.Title = "Admin not found"
-			resp.Status = http.StatusNotFound
-			resp.Code = codes.AdminNotFound
-			resp.Errors = err
-			return resp.Send(ctx)
-		}
-		resp.Title = "Something went wrong"
-		resp.Status = http.StatusInternalServerError
-		resp.Code = codes.DatabaseQueryFailed
+		resp.Title = "Authorization token not given"
+		resp.Status = http.StatusUnauthorized
+		resp.Code = codes.InvalidAuthorizationToken
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	accessToken, err := jwt.BuildJWTToken(admin.Phone, string(admin.Role), admin.ID.Hex(), constants.AdminType)
+	accessToken, err := jwt.BuildJWTToken(claims.Phone, string(claims.Audience), claims.UserID, claims.AccountType)
 	if err != nil {
 		resp.Title = "Failed to sign auth token"
 		resp.Status = http.StatusInternalServerError

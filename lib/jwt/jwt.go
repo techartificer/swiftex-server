@@ -37,6 +37,26 @@ func BuildJWTToken(phone, scope, id, accountType string) (string, error) {
 	return token.SignedString([]byte(config.GetJWT().Secret))
 }
 
+func DecodeToken(ctx echo.Context) (*Claims, error) {
+	token := extractTokenFromHeader(ctx)
+	if token == "" {
+		return nil, errors.NewError("Authorization token not found")
+	}
+	parsedToken, _ := jwt.Parse(token, func(token *jwt.Token) (i interface{}, err error) {
+		return []byte(config.GetJWT().Secret), nil
+	})
+	mapClaims := parsedToken.Claims.(jwt.MapClaims)
+	claims := &Claims{
+		Phone:       mapClaims["phone"].(string),
+		AccountType: mapClaims["accountType"].(string),
+		UserID:      mapClaims["id"].(string),
+		StandardClaims: jwt.StandardClaims{
+			Audience: mapClaims["aud"].(string),
+		},
+	}
+	return claims, nil
+}
+
 func NewRefresToken(userID primitive.ObjectID) string {
 	now := fmt.Sprintf("%d", time.Now().Unix())
 	time := base64.StdEncoding.WithPadding(NoPadding).EncodeToString([]byte(now))

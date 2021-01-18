@@ -9,6 +9,11 @@ const (
 )
 
 const (
+	ShopOwner     string = "Owner"
+	ShopModerator string = "Moderator"
+)
+
+const (
 	// SuperAdmin has all sorts of access
 	SuperAdmin AdminRole = "Super Admin"
 	// Admin has all access exepet admin creation
