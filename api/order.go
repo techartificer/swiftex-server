@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants"
@@ -14,11 +15,60 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
-	// endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth())
+	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+}
+
+func orders(ctx echo.Context) error {
+	resp := response.Response{}
+	shopID := ctx.Param("shopId")
+	lastID, isDelivered := ctx.QueryParam("lastId"), ctx.QueryParam("isDelivered")
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid shop ID"
+		resp.Status = http.StatusUnprocessableEntity
+		resp.Code = codes.InvalidMongoID
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	query := make(bson.M)
+	query["shopId"] = _shopID
+	if lastID != "" {
+		id, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid order ID"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.InvalidMongoID
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		query["_id"] = bson.M{"$gt": id}
+	}
+	date := time.Date(2020, 12, 31, 0, 0, 0, 0, time.UTC)
+	if isDelivered != "" {
+		query["deliverdAt"] = bson.M{"$gt": date}
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	orders, err := orderRepo.Orders(db, query)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.SomethingWentWrong
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Status = http.StatusOK
+	resp.Data = orders
+	return resp.Send(ctx)
 }
 
 func orderCreate(ctx echo.Context) error {

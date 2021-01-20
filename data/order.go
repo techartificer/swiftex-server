@@ -4,11 +4,15 @@ import (
 	"context"
 
 	"github.com/techartificer/swiftex/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OrderRepository interface {
 	Create(db *mongo.Database, order *models.Order) error
+	Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error)
 }
 
 type orderRepositoryImpl struct{}
@@ -26,4 +30,21 @@ func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) er
 	orderCollection := db.Collection(order.CollectionName())
 	_, err := orderCollection.InsertOne(context.Background(), order)
 	return err
+}
+
+func (o *orderRepositoryImpl) Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error) {
+	order := models.Order{}
+	orderCollection := db.Collection(order.CollectionName())
+
+	opts := options.Find().SetSort(bson.M{"_id": 1}).SetLimit(15)
+	cursor, err := orderCollection.Find(context.Background(), query, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var orders []models.Order
+	if err = cursor.All(context.Background(), &orders); err != nil {
+		return nil, err
+	}
+	return &orders, nil
 }
