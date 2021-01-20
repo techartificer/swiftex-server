@@ -15,6 +15,7 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -24,6 +25,33 @@ func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.GET("/all-shops/", allShops, middlewares.JWTAuth(true))
 	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.PATCH("/id/:shopId/", updateShop, middlewares.JWTAuth(false), middlewares.IsShopOwner())
+	endpoint.GET("/search/", searchShop, middlewares.JWTAuth(true))
+}
+
+func searchShop(ctx echo.Context) error {
+	resp := response.Response{}
+	name, phone := ctx.QueryParam("name"), ctx.QueryParam("phone")
+	query := make(bson.M)
+	if name != "" {
+		query["name"] = primitive.Regex{Pattern: name, Options: "i"}
+	}
+	if phone != "" {
+		query["phone"] = primitive.Regex{Pattern: phone, Options: ""}
+	}
+	db := database.GetDB()
+	shopRepo := data.NewShopRepo()
+	shops, err := shopRepo.Search(db, query)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = shops
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func shopCreate(ctx echo.Context) error {

@@ -16,6 +16,7 @@ type ShopRepository interface {
 	ShopByID(db *mongo.Database, ID string) (*models.Shop, error)
 	UpdateShopByID(db *mongo.Database, ID string, shop *models.Shop) (*models.Shop, error)
 	Shops(db *mongo.Database, lastID string, limit int64) (*[]models.Shop, error)
+	Search(db *mongo.Database, query primitive.M) (*[]models.Shop, error)
 }
 
 type shopRepositoryImpl struct{}
@@ -33,6 +34,23 @@ func (s *shopRepositoryImpl) Create(db *mongo.Database, shop *models.Shop) error
 	shopCollection := db.Collection(shop.CollectionName())
 	_, err := shopCollection.InsertOne(context.Background(), shop)
 	return err
+}
+
+func (a *shopRepositoryImpl) Search(db *mongo.Database, query primitive.M) (*[]models.Shop, error) {
+	shop := &models.Shop{}
+	shopCollection := db.Collection(shop.CollectionName())
+	opts := options.Find().SetLimit(10)
+
+	cursor, err := shopCollection.Find(context.Background(), query, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var shops []models.Shop
+	if err = cursor.All(context.Background(), &shops); err != nil {
+		return nil, err
+	}
+	return &shops, nil
 }
 
 func (a *shopRepositoryImpl) UpdateShopByID(db *mongo.Database, ID string, shop *models.Shop) (*models.Shop, error) {

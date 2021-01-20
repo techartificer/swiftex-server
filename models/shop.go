@@ -46,5 +46,8 @@ func initShopIndex(db *mongo.Database) error {
 	if err := createIndex(shopCol, bson.M{"phone": 1}, false); err != nil {
 		return err
 	}
+	if err := createIndex(shopCol, bson.M{"name": "text"}, false); err != nil {
+		return err
+	}
 	return nil
 }
