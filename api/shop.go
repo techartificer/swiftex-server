@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gosimple/slug"
 	"github.com/labstack/echo/v4"
@@ -20,7 +21,9 @@ import (
 func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", shopCreate, middlewares.JWTAuth(false))
 	endpoint.GET("/myshops/", myShops, middlewares.JWTAuth(false))
+	endpoint.GET("/all-shops/", allShops, middlewares.JWTAuth(true))
 	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.PATCH("/id/:shopId/", updateShop, middlewares.JWTAuth(false), middlewares.IsShopOwner())
 }
 
 func shopCreate(ctx echo.Context) error {
@@ -56,6 +59,76 @@ func shopCreate(ctx echo.Context) error {
 	}
 	resp.Data = shop
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+func allShops(ctx echo.Context) error {
+	resp := response.Response{}
+	lastID, limit := ctx.QueryParam("lastId"), ctx.QueryParam("limit")
+	var limitNum int64
+	if limit != "" {
+		ln, err := strconv.Atoi(limit)
+		limitNum = int64(ln)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Errors = err
+			resp.Title = "Invalid limit"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.InvalidLimit
+			return resp.Send(ctx)
+		}
+	}
+	logger.Log.Println(lastID, limit)
+	db := database.GetDB()
+	shopRepo := data.NewShopRepo()
+	shops, err := shopRepo.Shops(db, lastID, limitNum)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+	}
+	resp.Data = shops
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func updateShop(ctx echo.Context) error {
+	resp := response.Response{}
+	shop, err := validators.ValidateShopUpdate(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid shop update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidRegisterData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	if len(shop.Name) > 0 {
+		shop.ShopID = slug.Make(shop.Name)
+	}
+	shopID := ctx.Param("shopId")
+	db := database.GetDB()
+	shopRepo := data.NewShopRepo()
+	updatedShop, err := shopRepo.UpdateShopByID(db, shopID, shop)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if errors.IsMongoDupError(err) {
+			resp.Title = "Shop already exist"
+			resp.Status = http.StatusConflict
+			resp.Code = codes.ShopAlreadyExist
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Status = http.StatusOK
+	resp.Data = updatedShop
 	return resp.Send(ctx)
 }
 

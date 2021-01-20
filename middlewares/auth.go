@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -26,7 +25,6 @@ func JWTAuth(isAdmin bool) echo.MiddlewareFunc {
 				resp.Errors = err
 				return resp.Send(ctx)
 			}
-			log.Println(claims.AccountType, isAdmin)
 			if isAdmin && claims.AccountType != constants.AdminType {
 				resp.Status = http.StatusUnauthorized
 				resp.Code = codes.InvalidAuthorizationToken
