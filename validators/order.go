@@ -66,9 +66,10 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 		IsAccepted:            false,
 		Status: []models.OrderStatus{
 			{
-				ID:   primitive.NewObjectID(),
-				Text: constants.Pending,
-				Time: time.Now().UTC(),
+				ID:     primitive.NewObjectID(),
+				Text:   constants.Pending,
+				Status: constants.Accepted,
+				Time:   time.Now().UTC(),
 			},
 		},
 		CreatedAt: time.Now().UTC(),
