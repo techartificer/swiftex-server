@@ -20,7 +20,7 @@ type Admin struct {
 	Status     string              `bson:"status,omitempty" json:"status"`
 	Role       constants.AdminRole `bson:"role,omitempty" json:"role"`
 	CreatedAt  time.Time           `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdateAt   time.Time           `bson:"updatedAt,omitempty" json:"updatedAt"`
+	UpdatedAt  time.Time           `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
 
 // CollectionName returns name of the models

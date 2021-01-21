@@ -15,6 +15,7 @@ type OrderRepository interface {
 	Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error)
 	UpdateOrder(db *mongo.Database, order *models.Order, ID, shopID string) (*models.Order, error)
 	AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error)
+	OrderByID(db *mongo.Database, ID string) (*models.Order, error)
 }
 
 type orderRepositoryImpl struct{}
@@ -32,6 +33,19 @@ func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) er
 	orderCollection := db.Collection(order.CollectionName())
 	_, err := orderCollection.InsertOne(context.Background(), order)
 	return err
+}
+
+func (o *orderRepositoryImpl) OrderByID(db *mongo.Database, ID string) (*models.Order, error) {
+	order := &models.Order{}
+	orderCollection := db.Collection(order.CollectionName())
+	_id, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{{"_id", _id}}
+
+	err = orderCollection.FindOne(context.Background(), filter).Decode(order)
+	return order, nil
 }
 
 func (o *orderRepositoryImpl) Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error) {

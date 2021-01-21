@@ -15,6 +15,7 @@ import (
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
+	"github.com/techartificer/swiftex/models"
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -64,8 +65,74 @@ func updateOrder(ctx echo.Context) error {
 	return resp.Send(ctx)
 }
 
-//? ORDER Status update api
 //? ORDER cancel api
+
+func cancelOrder(ctx echo.Context) error {
+	resp := response.Response{}
+	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
+
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	order := &models.Order{
+		IsCancelled: true,
+		UpdatedAt:   time.Now().UTC(),
+	}
+	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.ShopNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = updatedOrder
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func orderByID(ctx echo.Context) error {
+	resp := response.Response{}
+	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
+
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	order, err := orderRepo.OrderByID(db, orderID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	if order.ShopID.Hex() != shopID {
+		resp.Title = "You don't have access"
+		resp.Status = http.StatusForbidden
+		resp.Code = codes.AccessDenied
+		resp.Errors = errors.NewError(err.Error())
+		return resp.Send(ctx)
+	}
+
+	resp.Data = order
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
 
 func addOrderStatus(ctx echo.Context) error {
 	/*
@@ -92,7 +159,7 @@ func addOrderStatus(ctx echo.Context) error {
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Order not found"
 			resp.Status = http.StatusNotFound
-			resp.Code = codes.ShopNotFound
+			resp.Code = codes.OrderNotFound
 			resp.Errors = errors.NewError(err.Error())
 			return resp.Send(ctx)
 		}

@@ -50,7 +50,7 @@ type Order struct {
 	IsAccepted            bool               `bson:"isAccepted,omitempty" json:"isAccepted"`
 	DeliveredAt           time.Time          `bson:"deliverdAt" json:"deliverdAt"`
 	CreatedAt             time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdateAt              time.Time          `bson:"updatedAt" json:"updatedAt"`
+	UpdatedAt             time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 // CollectionName returns name of the models

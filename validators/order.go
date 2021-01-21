@@ -155,7 +155,7 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 		Comments:              body.Comments,
 		DeliveryType:          body.DeliveryType,
 		PaymentStatus:         body.PaymentStatus,
-		UpdateAt:              time.Now().UTC(),
+		UpdatedAt:             time.Now().UTC(),
 	}
 	return order, nil
 }

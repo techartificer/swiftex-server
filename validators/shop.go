@@ -72,7 +72,7 @@ func ValidateShopUpdate(ctx echo.Context) (*models.Shop, error) {
 		PickupArea:    body.PickupArea,
 		FBPage:        body.FBPage,
 		DeliveryZone:  body.DeliveryZone,
-		UpdateAt:      time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
 	}
 	return shop, nil
 }

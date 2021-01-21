@@ -26,7 +26,7 @@ type Shop struct {
 	FBPage        string               `bson:"fbPage,omitempty" json:"fbPage"`
 	Moderators    []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators,omitempty"`
 	CreatedAt     time.Time            `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdateAt      time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
+	UpdatedAt     time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
 
 // CollectionName returns name of the models
