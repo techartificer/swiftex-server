@@ -64,7 +64,14 @@ func updateOrder(ctx echo.Context) error {
 	return resp.Send(ctx)
 }
 
+//? ORDER Status update api
+//? ORDER cancel api
+
 func addOrderStatus(ctx echo.Context) error {
+	/*
+		TODO: check order status
+		TODO: If accepted can not update
+	*/
 	resp := response.Response{}
 	orderID := ctx.Param("orderId")
 	body, err := validators.UpdateOrderStatus(ctx)
@@ -151,7 +158,6 @@ func orderCreate(ctx echo.Context) error {
 	resp := response.Response{}
 	order, err := validators.ValidateOrderCreate(ctx)
 	if err != nil {
-		// logger.Log.Errorln("XXXXXXXXXXX: ", err)
 		log.Println(err)
 		resp.Title = "Invalid order create request data"
 		resp.Status = http.StatusBadRequest

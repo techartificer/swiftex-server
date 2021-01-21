@@ -62,6 +62,8 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 		Comments:              body.Comments,
 		DeliveryType:          body.DeliveryType,
 		PaymentStatus:         body.PaymentStatus,
+		IsCancelled:           false,
+		IsAccepted:            false,
 		Status: []models.OrderStatus{
 			{
 				ID:   primitive.NewObjectID(),

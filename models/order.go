@@ -47,6 +47,7 @@ type Order struct {
 	DeliveryType          string             `bson:"deliveryType,omitempty" json:"deliveryType"`
 	Status                []OrderStatus      `bson:"status,omitempty" json:"status"`
 	IsCancelled           bool               `bson:"isCancelled,omitempty" json:"isCancelled"`
+	IsAccepted            bool               `bson:"isAccepted,omitempty" json:"isAccepted"`
 	DeliveredAt           time.Time          `bson:"deliverdAt" json:"deliverdAt"`
 	CreatedAt             time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdateAt              time.Time          `bson:"updatedAt" json:"updatedAt"`
