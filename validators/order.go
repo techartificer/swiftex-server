@@ -42,9 +42,9 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	}
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
-		DeliveryBoy:           body.DeliveryBoy,
-		ShopModeratorID:       body.ShopModeratorID,
-		MerchantID:            body.MerchantID,
+		DeliveryBoy:           &body.DeliveryBoy,
+		ShopModeratorID:       &body.ShopModeratorID,
+		MerchantID:            &body.MerchantID,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,
@@ -96,10 +96,10 @@ func UpdateOrderStatus(ctx echo.Context) (*models.OrderStatus, error) {
 
 	orderStatus := &models.OrderStatus{
 		ID:              primitive.NewObjectID(),
-		DeleveryBoyID:   body.DeleveryBoyID,
-		ShopModeratorID: body.ShopModeratorID,
-		MerchantID:      body.MerchantID,
-		AdminID:         body.AdminID,
+		DeleveryBoyID:   &body.DeleveryBoyID,
+		ShopModeratorID: &body.ShopModeratorID,
+		MerchantID:      &body.MerchantID,
+		AdminID:         &body.AdminID,
 		Status:          body.Status,
 		Text:            body.Text,
 		Time:            time.Now().UTC(),
@@ -137,7 +137,7 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 		return nil, err
 	}
 	order := &models.Order{
-		DeliveryBoy:           body.DeliveryBoy,
+		DeliveryBoy:           &body.DeliveryBoy,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,

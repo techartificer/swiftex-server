@@ -27,6 +27,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.PATCH("/id/:orderId/shopId/:shopId/", updateOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.PATCH("/add/order-status/:orderId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
+	endpoint.PATCH("/cancel/id/:orderId/shopId/:shopId/", cancelOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 }
 
 func updateOrder(ctx echo.Context) error {
@@ -64,8 +65,6 @@ func updateOrder(ctx echo.Context) error {
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
-
-//? ORDER cancel api
 
 func cancelOrder(ctx echo.Context) error {
 	resp := response.Response{}
