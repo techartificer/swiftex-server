@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -21,14 +22,51 @@ import (
 )
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
-	endpoint.POST("/create/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
-	endpoint.PATCH("/add/order-status/:shopId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
+	endpoint.PATCH("/id/:orderId/shopId/:shopId/", updateOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.PATCH("/add/order-status/:orderId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
+}
+
+func updateOrder(ctx echo.Context) error {
+	resp := response.Response{}
+	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
+	order, err := validators.UpdateOrder(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid order update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+
+	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.ShopNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = updatedOrder
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func addOrderStatus(ctx echo.Context) error {
 	resp := response.Response{}
-	shopID := ctx.Param("shopId")
+	orderID := ctx.Param("orderId")
 	body, err := validators.UpdateOrderStatus(ctx)
 	if err != nil {
 		logger.Log.Errorln(err)
@@ -41,7 +79,7 @@ func addOrderStatus(ctx echo.Context) error {
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 
-	orderStatus, err := orderRepo.AddOrderStatus(db, body, shopID)
+	orderStatus, err := orderRepo.AddOrderStatus(db, body, orderID)
 	if err != nil {
 		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
@@ -113,13 +151,25 @@ func orderCreate(ctx echo.Context) error {
 	resp := response.Response{}
 	order, err := validators.ValidateOrderCreate(ctx)
 	if err != nil {
-		logger.Log.Errorln(err)
+		// logger.Log.Errorln("XXXXXXXXXXX: ", err)
+		log.Println(err)
 		resp.Title = "Invalid order create request data"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.InvalidShopCreateData
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+	shopID := ctx.Param("shopId")
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		log.Println(err)
+		resp.Title = "Invalid shop ID"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidShopCreateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	order.ShopID = _shopID
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 	tid, err := random.GenerateRandomString(constants.TrackIDSize)

@@ -106,7 +106,6 @@ func allShops(ctx echo.Context) error {
 			return resp.Send(ctx)
 		}
 	}
-	logger.Log.Println(lastID, limit)
 	db := database.GetDB()
 	shopRepo := data.NewShopRepo()
 	shops, err := shopRepo.Shops(db, lastID, limitNum)

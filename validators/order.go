@@ -10,7 +10,6 @@ import (
 )
 
 type OrderCreateReq struct {
-	ShopID                primitive.ObjectID `validate:"required" json:"shopId"`
 	DeliveryBoy           primitive.ObjectID `validate:"omitempty" json:"deliveryBoy"`
 	ShopModeratorID       primitive.ObjectID `validate:"omitempty" json:"shopModerator"`
 	MerchantID            primitive.ObjectID `validate:"omitempty" json:"merchant"`
@@ -43,7 +42,6 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	}
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
-		ShopID:                body.ShopID,
 		DeliveryBoy:           body.DeliveryBoy,
 		ShopModeratorID:       body.ShopModeratorID,
 		MerchantID:            body.MerchantID,
@@ -105,4 +103,57 @@ func UpdateOrderStatus(ctx echo.Context) (*models.OrderStatus, error) {
 		Time:            time.Now().UTC(),
 	}
 	return orderStatus, nil
+}
+
+type OrderUpdateReq struct {
+	DeliveryBoy           primitive.ObjectID `validate:"omitempty" json:"deliveryBoy"`
+	RecipientName         string             `validate:"omitempty" json:"recipientName"`
+	RecipientPhone        string             `validate:"omitempty" json:"recipientPhone"`
+	RecipientCity         string             `validate:"omitempty" json:"recipientCity"`
+	RecipientThana        string             `validate:"omitempty" json:"recipientThana"`
+	RecipientArea         string             `validate:"omitempty" json:"recipientArea"`
+	RecipientZip          string             `validate:"omitempty" json:"recipientZip"`
+	RecipientAddress      string             `validate:"omitempty" json:"recipientAddress"`
+	PackageCode           string             `validate:"omitempty" json:"packageCode"`
+	PaymentStatus         string             `validate:"omitempty" json:"paymentStatus"`
+	Price                 float64            `validate:"omitempty" json:"price"`
+	ParcelType            string             `validate:"omitempty" json:"parcelType"`
+	RequestedDeliveryTime time.Time          `validate:"omitempty" json:"requestedDeliveryTime"`
+	PickAddress           string             `validate:"omitempty" json:"pickAddress"`
+	PickHub               string             `validate:"omitempty" json:"pickHub"`
+	Comments              string             `validate:"omitempty,max=300" json:"comments"`
+	NumberOfItems         int                `validate:"omitempty" json:"numberOfItems"`
+	DeliveryType          string             `validate:"omitempty" json:"deliveryType"`
+}
+
+func UpdateOrder(ctx echo.Context) (*models.Order, error) {
+	body := OrderUpdateReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	order := &models.Order{
+		DeliveryBoy:           body.DeliveryBoy,
+		RecipientName:         body.RecipientName,
+		RecipientPhone:        body.RecipientPhone,
+		RecipientCity:         body.RecipientCity,
+		RecipientThana:        body.RecipientThana,
+		RecipientZip:          body.RecipientZip,
+		RecipientArea:         body.RecipientArea,
+		RecipientAddress:      body.RecipientAddress,
+		PackageCode:           body.PackageCode,
+		ParcelType:            body.ParcelType,
+		RequestedDeliveryTime: body.RequestedDeliveryTime,
+		PickAddress:           body.PickAddress,
+		PickHub:               body.PickHub,
+		Price:                 body.Price,
+		NumberOfItems:         body.NumberOfItems,
+		Comments:              body.Comments,
+		DeliveryType:          body.DeliveryType,
+		PaymentStatus:         body.PaymentStatus,
+		UpdateAt:              time.Now().UTC(),
+	}
+	return order, nil
 }

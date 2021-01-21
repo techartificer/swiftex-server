@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -36,6 +37,7 @@ func HasShopAccess() echo.MiddlewareFunc {
 			r := ctx.Get(constants.Role).(string)
 			role := constants.AdminRole(r)
 			shopID := ctx.Param("shopId")
+			log.Println(shopID)
 			db := database.GetDB()
 			shopRepo := data.NewShopRepo()
 			shop, err := shopRepo.ShopByID(db, shopID)

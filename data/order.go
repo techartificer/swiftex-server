@@ -13,7 +13,7 @@ import (
 type OrderRepository interface {
 	Create(db *mongo.Database, order *models.Order) error
 	Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error)
-	UpdateOrder(db *mongo.Database, order *models.Order, ID string) (*models.Order, error)
+	UpdateOrder(db *mongo.Database, order *models.Order, ID, shopID string) (*models.Order, error)
 	AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error)
 }
 
@@ -51,13 +51,17 @@ func (o *orderRepositoryImpl) Orders(db *mongo.Database, query primitive.M) (*[]
 	return &orders, nil
 }
 
-func (o *orderRepositoryImpl) UpdateOrder(db *mongo.Database, order *models.Order, ID string) (*models.Order, error) {
+func (o *orderRepositoryImpl) UpdateOrder(db *mongo.Database, order *models.Order, ID, shopID string) (*models.Order, error) {
 	orderCollection := db.Collection(order.CollectionName())
 	_id, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, err
 	}
-	filter := bson.D{{"_id", _id}}
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{{"_id", _id}, {"shopId", _shopID}}
 	after := options.After
 	opt := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
