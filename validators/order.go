@@ -75,3 +75,34 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	}
 	return order, nil
 }
+
+type OrderStatusUpdateReq struct {
+	Text            string             `validate:"required" json:"text"`
+	DeleveryBoyID   primitive.ObjectID `validate:"omitempty" json:"deleveryBoy"`
+	ShopModeratorID primitive.ObjectID `validate:"omitempty" json:"shopModerator"`
+	MerchantID      primitive.ObjectID `validate:"omitempty" json:"merchant"`
+	AdminID         primitive.ObjectID `validate:"omitempty" json:"admin"`
+	Status          string             `validate:"required" json:"status"`
+}
+
+func UpdateOrderStatus(ctx echo.Context) (*models.OrderStatus, error) {
+	body := OrderStatusUpdateReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+
+	orderStatus := &models.OrderStatus{
+		ID:              primitive.NewObjectID(),
+		DeleveryBoyID:   body.DeleveryBoyID,
+		ShopModeratorID: body.ShopModeratorID,
+		MerchantID:      body.MerchantID,
+		AdminID:         body.AdminID,
+		Status:          body.Status,
+		Text:            body.Text,
+		Time:            time.Now().UTC(),
+	}
+	return orderStatus, nil
+}

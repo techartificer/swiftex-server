@@ -17,11 +17,49 @@ import (
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.PATCH("/add/order-status/:shopId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
+}
+
+func addOrderStatus(ctx echo.Context) error {
+	resp := response.Response{}
+	shopID := ctx.Param("shopId")
+	body, err := validators.UpdateOrderStatus(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid order update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderStatusUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+
+	orderStatus, err := orderRepo.AddOrderStatus(db, body, shopID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.ShopNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = orderStatus
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func orders(ctx echo.Context) error {
