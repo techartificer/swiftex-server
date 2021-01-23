@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -177,7 +178,9 @@ func addOrderStatus(ctx echo.Context) error {
 func orders(ctx echo.Context) error {
 	resp := response.Response{}
 	shopID := ctx.Param("shopId")
-	lastID, isDelivered := ctx.QueryParam("lastId"), ctx.QueryParam("isDelivered")
+	lastID, startDate, endDate := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate")
+	trackId, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+
 	_shopID, err := primitive.ObjectIDFromHex(shopID)
 	if err != nil {
 		logger.Log.Errorln(err)
@@ -201,9 +204,34 @@ func orders(ctx echo.Context) error {
 		}
 		query["_id"] = bson.M{"$lt": id}
 	}
-	date := time.Date(2020, 12, 31, 0, 0, 0, 0, time.UTC)
-	if isDelivered != "" {
-		query["deliverdAt"] = bson.M{"$gt": date}
+	if phone != "" {
+		query["recipientPhone"] = primitive.Regex{Pattern: phone, Options: ""}
+	}
+	if trackId != "" {
+		query["trackId"] = primitive.Regex{Pattern: trackId, Options: ""}
+	}
+	if startDate != "" && endDate != "" {
+		std, err := strconv.ParseInt(startDate, 10, 64)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tms := time.Unix(std/1000, 0)
+		end, err := strconv.ParseInt(endDate, 10, 64)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tme := time.Unix(end/1000, 0)
+		query["$and"] = []bson.M{{"createdAt": bson.M{"$gte": tms}}, {"createdAt": bson.M{"$lte": tme}}}
 	}
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
