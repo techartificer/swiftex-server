@@ -52,7 +52,7 @@ func (o *orderRepositoryImpl) Orders(db *mongo.Database, query primitive.M) (*[]
 	order := models.Order{}
 	orderCollection := db.Collection(order.CollectionName())
 
-	opts := options.Find().SetSort(bson.M{"_id": 1}).SetLimit(15)
+	opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
 	cursor, err := orderCollection.Find(context.Background(), query, opts)
 	if err != nil {
 		return nil, err

@@ -193,13 +193,13 @@ func orders(ctx echo.Context) error {
 		id, err := primitive.ObjectIDFromHex(lastID)
 		if err != nil {
 			logger.Log.Errorln(err)
-			resp.Title = "Invalid order ID"
+			resp.Title = "Invalid last order ID"
 			resp.Status = http.StatusUnprocessableEntity
 			resp.Code = codes.InvalidMongoID
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
-		query["_id"] = bson.M{"$gt": id}
+		query["_id"] = bson.M{"$lt": id}
 	}
 	date := time.Date(2020, 12, 31, 0, 0, 0, 0, time.UTC)
 	if isDelivered != "" {

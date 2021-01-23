@@ -37,7 +37,7 @@ type Order struct {
 	PackageCode           string              `bson:"packageCode,omitempty" json:"packageCode"`
 	PaymentStatus         string              `bson:"paymentStatus,omitempty" json:"paymentStatus"`
 	Price                 float64             `bson:"price,omitempty" json:"price"`
-	ParcelType            string              `bson:"parcelType,omitempty" json:"parcelType"`
+	PercelType            string              `bson:"percelType,omitempty" json:"percelType"`
 	RequestedDeliveryTime time.Time           `bson:"requestedDeliveryTime,omitempty" json:"requestedDeliveryTime"`
 	PickAddress           string              `bson:"pickAddress,omitempty" json:"pickAddress"`
 	PickHub               string              `bson:"pickHub,omitempty" json:"pickHub"`
