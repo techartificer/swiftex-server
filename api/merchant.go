@@ -12,10 +12,35 @@ import (
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/validators"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterMerchantRoutes(endpoint *echo.Group) {
 	endpoint.POST("/register/", register)
+	endpoint.GET("/is-available/:phone/", isUsernameAvilable)
+}
+
+func isUsernameAvilable(ctx echo.Context) error {
+	resp := response.Response{}
+	phone := ctx.Param("phone")
+	merchantRepo := data.NewMerchantRepo()
+	db := database.GetDB()
+	_, err := merchantRepo.FindByPhone(db, phone)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			resp.Data = map[string]bool{"available": true}
+			resp.Status = http.StatusOK
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = map[string]bool{"available": false}
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func register(ctx echo.Context) error {
