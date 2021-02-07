@@ -134,6 +134,8 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}
+	UserID := ctx.Get(constants.UserID).(primitive.ObjectID)
+
 	order := &models.Order{
 		DeliveryBoy:           &body.DeliveryBoy,
 		RecipientName:         body.RecipientName,
@@ -153,6 +155,8 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 		Comments:              body.Comments,
 		DeliveryType:          body.DeliveryType,
 		PaymentStatus:         body.PaymentStatus,
+		DeliveredAt:           nil,
+		UpdateBy:              &UserID,
 		UpdatedAt:             time.Now().UTC(),
 	}
 	return order, nil

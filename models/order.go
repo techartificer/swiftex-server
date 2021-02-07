@@ -48,8 +48,9 @@ type Order struct {
 	Status                []OrderStatus       `bson:"status,omitempty" json:"status"`
 	IsCancelled           bool                `bson:"isCancelled,omitempty" json:"isCancelled"`
 	IsAccepted            bool                `bson:"isAccepted,omitempty" json:"isAccepted"`
-	DeliveredAt           time.Time           `bson:"deliverdAt,omitempty" json:"deliverdAt,omitempty"`
+	DeliveredAt           *time.Time          `bson:"deliverdAt,omitempty" json:"deliverdAt,omitempty"`
 	CreatedAt             time.Time           `bson:"createdAt,omitempty" json:"createdAt"`
+	UpdateBy              *primitive.ObjectID `bson:"updatedBy,omitempty" json:"_"`
 	UpdatedAt             time.Time           `bson:"updatedAt" json:"updatedAt"`
 }
 

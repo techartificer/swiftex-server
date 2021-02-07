@@ -28,6 +28,7 @@ const (
 	OrderAlreadyExist            ErrorCode = "409004"
 	InvalidLimit                 ErrorCode = "422001"
 	InvalidMongoID               ErrorCode = "422002"
+	OrderAlreadyDelevered        ErrorCode = "422003"
 	DatabaseQueryFailed          ErrorCode = "500001"
 	UserLoginFailed              ErrorCode = "500002"
 	TokenRefreshFailed           ErrorCode = "500003"

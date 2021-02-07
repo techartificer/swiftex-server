@@ -140,6 +140,7 @@ func addOrderStatus(ctx echo.Context) error {
 		TODO: check order status
 		TODO: If accepted can not update
 	*/
+
 	resp := response.Response{}
 	orderID := ctx.Param("orderId")
 	body, err := validators.UpdateOrderStatus(ctx)
@@ -153,6 +154,21 @@ func addOrderStatus(ctx echo.Context) error {
 	}
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
+	order, err := orderRepo.OrderByID(db, orderID)
+	if err != nil {
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	if order.DeliveredAt != nil {
+		resp.Title = "Order already delevered"
+		resp.Status = http.StatusUnprocessableEntity
+		resp.Code = codes.OrderAlreadyDelevered
+		return resp.Send(ctx)
+	}
 
 	orderStatus, err := orderRepo.AddOrderStatus(db, body, orderID)
 	if err != nil {
@@ -179,7 +195,7 @@ func orders(ctx echo.Context) error {
 	resp := response.Response{}
 	shopID := ctx.Param("shopId")
 	lastID, startDate, endDate := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate")
-	trackId, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
 
 	_shopID, err := primitive.ObjectIDFromHex(shopID)
 	if err != nil {
@@ -207,8 +223,8 @@ func orders(ctx echo.Context) error {
 	if phone != "" {
 		query["recipientPhone"] = primitive.Regex{Pattern: phone, Options: ""}
 	}
-	if trackId != "" {
-		query["trackId"] = primitive.Regex{Pattern: trackId, Options: ""}
+	if trackID != "" {
+		query["trackId"] = primitive.Regex{Pattern: trackID, Options: ""}
 	}
 	if startDate != "" && endDate != "" {
 		std, err := strconv.ParseInt(startDate, 10, 64)
