@@ -12,10 +12,10 @@ import (
 type OrderStatus struct {
 	ID              primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
 	Text            string              `bson:"text,omitempty" json:"text"`
-	DeleveryBoyID   *primitive.ObjectID `bson:"deleveryBoyId,omitempty" json:"deleveryBoy"`
-	ShopModeratorID *primitive.ObjectID `bson:"shopModeratorId,omitempty" json:"shopModerator"`
-	MerchantID      *primitive.ObjectID `bson:"merchantId,omitempty" json:"merchant"`
-	AdminID         *primitive.ObjectID `bson:"adminId,omitempty" json:"admin"`
+	DeleveryBoyID   *primitive.ObjectID `bson:"deleveryBoyId,omitempty" json:"deleveryBoy,omitempty"`
+	ShopModeratorID *primitive.ObjectID `bson:"shopModeratorId,omitempty" json:"shopModerator,omitempty"`
+	MerchantID      *primitive.ObjectID `bson:"merchantId,omitempty" json:"merchant,omitempty"`
+	AdminID         *primitive.ObjectID `bson:"adminId,omitempty" json:"admin,omitempty"`
 	Status          string              `bson:"status,omitempty" json:"status"`
 	Time            time.Time           `bson:"time,omitempty" json:"time"`
 }

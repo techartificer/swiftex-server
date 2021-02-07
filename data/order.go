@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 
+	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,6 +17,7 @@ type OrderRepository interface {
 	UpdateOrder(db *mongo.Database, order *models.Order, ID, shopID string) (*models.Order, error)
 	AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error)
 	OrderByID(db *mongo.Database, ID string) (*models.Order, error)
+	TrackOrder(db *mongo.Database, trackID string) (*models.Order, error)
 }
 
 type orderRepositoryImpl struct{}
@@ -34,6 +36,15 @@ func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) er
 	_, err := orderCollection.InsertOne(context.Background(), order)
 	return err
 }
+func (o *orderRepositoryImpl) TrackOrder(db *mongo.Database, trackID string) (*models.Order, error) {
+	logger.Log.Println("trackId: ", trackID)
+	order := &models.Order{}
+	orderCollection := db.Collection(order.CollectionName())
+	filter := bson.M{"trackId": trackID}
+
+	err := orderCollection.FindOne(context.Background(), filter).Decode(order)
+	return order, err
+}
 
 func (o *orderRepositoryImpl) OrderByID(db *mongo.Database, ID string) (*models.Order, error) {
 	order := &models.Order{}
@@ -45,7 +56,7 @@ func (o *orderRepositoryImpl) OrderByID(db *mongo.Database, ID string) (*models.
 	filter := bson.D{{"_id", _id}}
 
 	err = orderCollection.FindOne(context.Background(), filter).Decode(order)
-	return order, nil
+	return order, err
 }
 
 func (o *orderRepositoryImpl) Orders(db *mongo.Database, query primitive.M) (*[]models.Order, error) {

@@ -30,6 +30,33 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.PATCH("/add/order-status/:orderId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
 	endpoint.PATCH("/cancel/id/:orderId/shopId/:shopId/", cancelOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.GET("/track/:trackId/", trackOrder)
+}
+
+func trackOrder(ctx echo.Context) error {
+	resp := response.Response{}
+	trackID := ctx.Param("trackId")
+	orderRepo := data.NewOrderRepo()
+	db := database.GetDB()
+	order, err := orderRepo.TrackOrder(db, trackID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = order.Status
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func updateOrder(ctx echo.Context) error {
@@ -53,7 +80,7 @@ func updateOrder(ctx echo.Context) error {
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "Order not found"
 			resp.Status = http.StatusNotFound
-			resp.Code = codes.ShopNotFound
+			resp.Code = codes.OrderNotFound
 			resp.Errors = errors.NewError(err.Error())
 			return resp.Send(ctx)
 		}

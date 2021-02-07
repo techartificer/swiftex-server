@@ -27,6 +27,7 @@ func isUsernameAvilable(ctx echo.Context) error {
 	db := database.GetDB()
 	_, err := merchantRepo.FindByPhone(db, phone)
 	if err != nil {
+		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
 			resp.Data = map[string]bool{"available": true}
 			resp.Status = http.StatusOK
