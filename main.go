@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/techartificer/swiftex/config"
 	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/firebase"
 	"github.com/techartificer/swiftex/lib/random"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
@@ -23,6 +24,9 @@ func init() {
 		panic(err)
 	}
 	validators.InitValidator()
+	if err := firebase.Initialize(); err != nil {
+		panic(err)
+	}
 }
 
 func main() {
