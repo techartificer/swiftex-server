@@ -9,6 +9,7 @@ const (
 	InvalidShopCreateData        ErrorCode = "400003"
 	InvalidOrderStatusUpdateData ErrorCode = "400004"
 	InvalidOrderUpdateData       ErrorCode = "400005"
+	PhoneNumberNotVerified       ErrorCode = "400006"
 	InvalidLoginCredential       ErrorCode = "401001"
 	BearerTokenGiven             ErrorCode = "401002"
 	InvalidAuthorizationToken    ErrorCode = "401003"

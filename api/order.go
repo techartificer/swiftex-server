@@ -33,6 +33,47 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/track/:trackId/", trackOrder)
 }
 
+func dashboard(ctx echo.Context) error {
+	resp := response.Response{}
+	shopID := ctx.Param("shopId")
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid shop ID"
+		resp.Status = http.StatusUnprocessableEntity
+		resp.Code = codes.InvalidMongoID
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	query := make(bson.M)
+	query["shopId"] = _shopID
+	startDate, endDate := ctx.QueryParam("startDate"), ctx.QueryParam("endData")
+	if startDate != "" && endDate != "" {
+		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tms := time.Unix(std/1000, 0) //std => startDate
+		end, err := strconv.ParseInt(endDate, 10, 64)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tme := time.Unix(end/1000, 0)
+		query["$and"] = []bson.M{{"createdAt": bson.M{"$gte": tms}}, {"createdAt": bson.M{"$lte": tme}}}
+	}
+	return resp.Send(ctx)
+}
+
 func trackOrder(ctx echo.Context) error {
 	resp := response.Response{}
 	trackID := ctx.Param("trackId")
@@ -254,7 +295,7 @@ func orders(ctx echo.Context) error {
 		query["trackId"] = primitive.Regex{Pattern: trackID, Options: ""}
 	}
 	if startDate != "" && endDate != "" {
-		std, err := strconv.ParseInt(startDate, 10, 64)
+		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
 		if err != nil {
 			logger.Log.Errorln(err)
 			resp.Title = "Invalid timestamp"
@@ -263,7 +304,7 @@ func orders(ctx echo.Context) error {
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
-		tms := time.Unix(std/1000, 0)
+		tms := time.Unix(std/1000, 0) //std => startDate
 		end, err := strconv.ParseInt(endDate, 10, 64)
 		if err != nil {
 			logger.Log.Errorln(err)

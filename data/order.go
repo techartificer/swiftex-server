@@ -31,11 +31,19 @@ func NewOrderRepo() OrderRepository {
 	return orderRepository
 }
 
+func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, startDate, endDate int64) error {
+	order := &models.Order{}
+	orderCollection := db.Collection(order.CollectionName())
+	_, err := orderCollection.CountDocuments(context.Background(), bson.M{})
+	return err
+}
+
 func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) error {
 	orderCollection := db.Collection(order.CollectionName())
 	_, err := orderCollection.InsertOne(context.Background(), order)
 	return err
 }
+
 func (o *orderRepositoryImpl) TrackOrder(db *mongo.Database, trackID string) (*models.Order, error) {
 	logger.Log.Println("trackId: ", trackID)
 	order := &models.Order{}

@@ -46,6 +46,7 @@ type Order struct {
 	TrackID               string              `bson:"trackId,omitempty" json:"trackId"`
 	DeliveryType          string              `bson:"deliveryType,omitempty" json:"deliveryType"`
 	Status                []OrderStatus       `bson:"status,omitempty" json:"status"`
+	FinalStatus           *string             `bson:"finalStatus,omitempty" json:"finalStatus"`
 	IsCancelled           bool                `bson:"isCancelled,omitempty" json:"isCancelled"`
 	IsAccepted            bool                `bson:"isAccepted,omitempty" json:"isAccepted"`
 	DeliveredAt           *time.Time          `bson:"deliverdAt,omitempty" json:"deliverdAt,omitempty"`

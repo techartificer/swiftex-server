@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
+	firebase "firebase.google.com/go"
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
@@ -13,6 +15,7 @@ import (
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/api/option"
 )
 
 func RegisterMerchantRoutes(endpoint *echo.Group) {
@@ -55,6 +58,57 @@ func register(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+
+	token := ctx.Request().Header.Get("FirebaseToken")
+	if token == "" {
+		logger.Log.Errorln(err)
+		resp.Title = "Phone nmber not verified"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.PhoneNumberNotVerified
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	opt := option.WithCredentialsFile("/home/caffeines/go/src/github.com/techartificer/swiftex/swiftex-firebase.json")
+	logger.Log.Println(opt)
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong!"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.SomethingWentWrong
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	auth, err := app.Auth(context.Background())
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong!"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.SomethingWentWrong
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	tokenCtx, err := auth.VerifyIDToken(context.Background(), token)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Phone number not verified"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.PhoneNumberNotVerified
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	phoneNumber := tokenCtx.Claims["phone_number"].(string)
+	if phoneNumber[1:] != merchant.Phone {
+		logger.Log.Errorln(err)
+		resp.Title = "Phone number not verified"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.PhoneNumberNotVerified
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	logger.Log.Println(phoneNumber)
+
 	db := database.GetDB()
 	merchantRepo := data.NewMerchantRepo()
 
