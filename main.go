@@ -14,6 +14,7 @@ import (
 func init() {
 	logger.SetupLog()
 	random.Initialize()
+	validators.InitValidator()
 	if err := config.LoadConfig(); err != nil {
 		panic(err)
 	}
@@ -23,7 +24,6 @@ func init() {
 	if err := models.InitializeIndex(database.GetDB()); err != nil {
 		panic(err)
 	}
-	validators.InitValidator()
 	if err := firebase.Initialize(); err != nil {
 		panic(err)
 	}

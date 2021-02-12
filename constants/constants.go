@@ -31,11 +31,13 @@ const (
 	Active string = "Active"
 	// Deactive status: user can not access
 	Deactive  string = "Deactive"
-	Delevered string = "Delevered"
+	Delivered string = "Delivered"
 	Accepted  string = "Accepted"
 	Apporved  string = "Approved"
 	Pending   string = "Pending"
 	Declined  string = "Declined"
+	InTransit string = "In Transit"
+	Returned  string = "Returned"
 )
 
 var AllStatus = []string{Active, Deactive}

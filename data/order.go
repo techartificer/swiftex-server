@@ -2,7 +2,10 @@ package data
 
 import (
 	"context"
+	"time"
 
+	"github.com/techartificer/swiftex/constants"
+	"github.com/techartificer/swiftex/lib/helper"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +21,7 @@ type OrderRepository interface {
 	AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error)
 	OrderByID(db *mongo.Database, ID string) (*models.Order, error)
 	TrackOrder(db *mongo.Database, trackID string) (*models.Order, error)
+	Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (map[string]int64, error)
 }
 
 type orderRepositoryImpl struct{}
@@ -31,11 +35,67 @@ func NewOrderRepo() OrderRepository {
 	return orderRepository
 }
 
-func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, startDate, endDate int64) error {
+func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (map[string]int64, error) {
 	order := &models.Order{}
 	orderCollection := db.Collection(order.CollectionName())
-	_, err := orderCollection.CountDocuments(context.Background(), bson.M{})
-	return err
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		return nil, err
+	}
+	query := make(bson.M)
+	query["shopId"] = _shopID
+	if !startDate.IsZero() && !endDate.IsZero() {
+		query["$and"] = []bson.M{
+			{"createdAt": bson.M{"$gte": startDate}},
+			{"createdAt": bson.M{"$lte": endDate}},
+		}
+	}
+	totalChan := make(chan int64)
+	defer close(totalChan)
+	errChan := make(chan error, 5)
+	defer close(errChan)
+	go func() {
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query)
+		errChan <- err1
+		totalChan <- cnt
+	}()
+	deliveredChan := make(chan int64)
+	defer close(deliveredChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["deliverdAt"] = bson.M{"$gt": time.Time{}}
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		deliveredChan <- cnt
+	}()
+	transitChan := make(chan int64)
+	defer close(transitChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["currentStatus"] = constants.InTransit
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		transitChan <- cnt
+	}()
+	returnedChan := make(chan int64)
+	defer close(returnedChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["currentStatus"] = constants.Returned
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		returnedChan <- cnt
+	}()
+	err = <-errChan
+	if err != nil {
+		return nil, err
+	}
+	data := make(map[string]int64)
+	data["total"] = <-totalChan
+	data["delivered"] = <-deliveredChan
+	data["returned"] = <-returnedChan
+	data["inTransit"] = <-transitChan
+	return data, err
 }
 
 func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) error {
