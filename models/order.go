@@ -51,7 +51,7 @@ type Order struct {
 	IsAccepted            bool                `bson:"isAccepted,omitempty" json:"isAccepted"`
 	DeliveredAt           *time.Time          `bson:"deliverdAt,omitempty" json:"deliverdAt,omitempty"`
 	CreatedAt             time.Time           `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdateBy              *primitive.ObjectID `bson:"updatedBy,omitempty" json:"_"`
+	UpdateBy              *primitive.ObjectID `bson:"updatedBy,omitempty" json:"-"`
 	UpdatedAt             time.Time           `bson:"updatedAt" json:"updatedAt"`
 }
 
