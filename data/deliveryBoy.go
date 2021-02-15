@@ -5,6 +5,7 @@ import (
 
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -31,6 +32,20 @@ func FindByPhone(db *mongo.Database, phone string) (*models.DeliveryBoy, error) 
 	deliveryBoy := &models.DeliveryBoy{}
 	deliveryBoyCol := db.Collection(deliveryBoy.CollectionName())
 	filter := bson.M{"phone": phone}
+	if err := deliveryBoyCol.FindOne(context.Background(), filter).Decode(deliveryBoy); err != nil {
+		return nil, err
+	}
+	return deliveryBoy, nil
+}
+
+func FindByID(db *mongo.Database, ID string) (*models.DeliveryBoy, error) {
+	deliveryBoy := &models.DeliveryBoy{}
+	_id, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, err
+	}
+	deliveryBoyCol := db.Collection(deliveryBoy.CollectionName())
+	filter := bson.M{"_id": _id}
 	if err := deliveryBoyCol.FindOne(context.Background(), filter).Decode(deliveryBoy); err != nil {
 		return nil, err
 	}
