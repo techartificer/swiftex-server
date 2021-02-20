@@ -40,7 +40,7 @@ func createRider(ctx echo.Context) error {
 		return resp.Send(ctx)
 	}
 	rider.Password = hash
-	riderRepo := data.NewDelivaryBoyRepo()
+	riderRepo := data.NewRiderRepo()
 	db := database.GetDB()
 
 	if err := riderRepo.Create(db, rider); err != nil {

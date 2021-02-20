@@ -6,6 +6,7 @@ type AdminRole string
 const (
 	AdminType    string = "Admin"
 	MerchantType string = "Merchant"
+	RiderType    string = "Rider"
 )
 
 const (
@@ -22,6 +23,7 @@ const (
 	Moderator AdminRole = "Moderator"
 	// ZoneManager has zone centric access
 	ZoneManager AdminRole = "Zone Manager"
+	Rider       string    = "Rider"
 )
 
 var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}

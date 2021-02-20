@@ -19,7 +19,7 @@ type riderRepoImpl struct{}
 
 var riderRepo RiderRepository
 
-func NewDelivaryBoyRepo() RiderRepository {
+func NewRiderRepo() RiderRepository {
 	if riderRepo != nil {
 		return riderRepo
 	}
