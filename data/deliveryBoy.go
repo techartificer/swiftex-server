@@ -9,45 +9,49 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type DeliveryBoyRepository interface{}
-
-type deliveryBoyImpl struct{}
-
-var deliveryBoyRepo DeliveryBoyRepository
-
-func NewDelivaryBoyRepo() DeliveryBoyRepository {
-	if deliveryBoyRepo != nil {
-		return deliveryBoyRepo
-	}
-	return deliveryBoyRepo
+type RiderRepository interface {
+	Create(db *mongo.Database, rider *models.Rider) error
+	FindByPhone(db *mongo.Database, phone string) (*models.Rider, error)
+	FindByID(db *mongo.Database, ID string) (*models.Rider, error)
 }
 
-func CreateDelivery(db *mongo.Database, deliveryBoy *models.DeliveryBoy) error {
-	deliveryBoyCol := db.Collection(deliveryBoy.CollectionName())
-	_, err := deliveryBoyCol.InsertOne(context.Background(), deliveryBoy)
+type riderImpl struct{}
+
+var riderRepo RiderRepository
+
+func NewDelivaryBoyRepo() RiderRepository {
+	if riderRepo != nil {
+		return riderRepo
+	}
+	return riderRepo
+}
+
+func Create(db *mongo.Database, rider *models.Rider) error {
+	riderCol := db.Collection(rider.CollectionName())
+	_, err := riderCol.InsertOne(context.Background(), rider)
 	return err
 }
 
-func FindByPhone(db *mongo.Database, phone string) (*models.DeliveryBoy, error) {
-	deliveryBoy := &models.DeliveryBoy{}
-	deliveryBoyCol := db.Collection(deliveryBoy.CollectionName())
+func FindByPhone(db *mongo.Database, phone string) (*models.Rider, error) {
+	rider := &models.Rider{}
+	riderCol := db.Collection(rider.CollectionName())
 	filter := bson.M{"phone": phone}
-	if err := deliveryBoyCol.FindOne(context.Background(), filter).Decode(deliveryBoy); err != nil {
+	if err := riderCol.FindOne(context.Background(), filter).Decode(rider); err != nil {
 		return nil, err
 	}
-	return deliveryBoy, nil
+	return rider, nil
 }
 
-func FindByID(db *mongo.Database, ID string) (*models.DeliveryBoy, error) {
-	deliveryBoy := &models.DeliveryBoy{}
+func FindByID(db *mongo.Database, ID string) (*models.Rider, error) {
+	rider := &models.Rider{}
 	_id, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, err
 	}
-	deliveryBoyCol := db.Collection(deliveryBoy.CollectionName())
+	riderCol := db.Collection(rider.CollectionName())
 	filter := bson.M{"_id": _id}
-	if err := deliveryBoyCol.FindOne(context.Background(), filter).Decode(deliveryBoy); err != nil {
+	if err := riderCol.FindOne(context.Background(), filter).Decode(rider); err != nil {
 		return nil, err
 	}
-	return deliveryBoy, nil
+	return rider, nil
 }

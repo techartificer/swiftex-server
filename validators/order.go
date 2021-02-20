@@ -39,7 +39,7 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	}
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
-		DeliveryBoy:           nil,
+		RiderID:               nil,
 		ShopModeratorID:       nil,
 		MerchantID:            nil,
 		RecipientName:         body.RecipientName,
@@ -106,7 +106,7 @@ func UpdateOrderStatus(ctx echo.Context) (*models.OrderStatus, error) {
 }
 
 type OrderUpdateReq struct {
-	DeliveryBoy           primitive.ObjectID `validate:"omitempty" json:"deliveryBoy"`
+	RiderID               primitive.ObjectID `validate:"omitempty" json:"riderId"`
 	RecipientName         string             `validate:"omitempty" json:"recipientName"`
 	RecipientPhone        string             `validate:"omitempty" json:"recipientPhone"`
 	RecipientCity         string             `validate:"omitempty" json:"recipientCity"`
@@ -137,7 +137,7 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 	UserID := ctx.Get(constants.UserID).(primitive.ObjectID)
 
 	order := &models.Order{
-		DeliveryBoy:           &body.DeliveryBoy,
+		RiderID:               &body.RiderID,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,

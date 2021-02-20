@@ -24,7 +24,7 @@ type OrderStatus struct {
 type Order struct {
 	ID                    primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
 	ShopID                primitive.ObjectID  `bson:"shopId,omitempty" json:"shopId"`
-	DeliveryBoy           *primitive.ObjectID `bson:"deliveryBoy,omitempty" json:"deliveryBoy"`
+	RiderID               *primitive.ObjectID `bson:"riderId,omitempty" json:"rider"`
 	ShopModeratorID       *primitive.ObjectID `bson:"shopModeratorId,omitempty" json:"shopModerator"`
 	MerchantID            *primitive.ObjectID `bson:"merchantId,omitempty" json:"merchant"`
 	RecipientName         string              `bson:"recipientName,omitempty" json:"recipientName"`
@@ -66,7 +66,7 @@ func initOrderIndex(db *mongo.Database) error {
 	if err := createIndex(orderCol, bson.M{"shopId": 1}, false); err != nil {
 		return err
 	}
-	if err := createIndex(orderCol, bson.M{"deliveryBoy": 1}, false); err != nil {
+	if err := createIndex(orderCol, bson.M{"riderID": 1}, false); err != nil {
 		return err
 	}
 	if err := createIndex(orderCol, bson.M{"trackId": 1}, true); err != nil {

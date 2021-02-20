@@ -42,7 +42,7 @@ func InitializeIndex(db *mongo.Database) error {
 	if err := initOrderIndex(db); err != nil {
 		return err
 	}
-	if err := initDeliveryBoyIndex(db); err != nil {
+	if err := initRiderIndex(db); err != nil {
 		return err
 	}
 	return nil
