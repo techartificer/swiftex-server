@@ -16,7 +16,7 @@ import (
 )
 
 func RegisterRiderRoutes(endpoint *echo.Group) {
-	endpoint.POST("/create", createRider, middlewares.JWTAuth(true), middlewares.IsSuperAdmin())
+	endpoint.POST("/create/", createRider, middlewares.JWTAuth(true))
 }
 
 func createRider(ctx echo.Context) error {
@@ -58,5 +58,7 @@ func createRider(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+	resp.Data = rider
+	resp.Status = http.StatusCreated
 	return resp.Send(ctx)
 }

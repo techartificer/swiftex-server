@@ -28,6 +28,7 @@ func ValidateRiderReq(ctx echo.Context) (*models.Rider, error) {
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}
+	creator := ctx.Get(constants.UserID).(primitive.ObjectID)
 	rider := &models.Rider{
 		ID:        primitive.NewObjectID(),
 		Name:      body.Name,
@@ -39,6 +40,7 @@ func ValidateRiderReq(ctx echo.Context) (*models.Rider, error) {
 		Salary:    body.Salary,
 		Address:   body.Address,
 		Remark:    body.Remark,
+		CreatedBy: &creator,
 		CreatedAt: time.Now().UTC(),
 	}
 	return rider, nil

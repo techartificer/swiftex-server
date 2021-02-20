@@ -52,4 +52,6 @@ func registerV1Routes() {
 	api.RegisterShopRoutes(shop)
 	order := v1.Group("/order")
 	api.RegisterOrderRoutes(order)
+	rider := v1.Group("/rider")
+	api.RegisterRiderRoutes(rider)
 }

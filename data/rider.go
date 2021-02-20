@@ -15,7 +15,7 @@ type RiderRepository interface {
 	FindByID(db *mongo.Database, ID string) (*models.Rider, error)
 }
 
-type riderImpl struct{}
+type riderRepoImpl struct{}
 
 var riderRepo RiderRepository
 
@@ -23,16 +23,17 @@ func NewDelivaryBoyRepo() RiderRepository {
 	if riderRepo != nil {
 		return riderRepo
 	}
+	riderRepo = &riderRepoImpl{}
 	return riderRepo
 }
 
-func Create(db *mongo.Database, rider *models.Rider) error {
+func (r *riderRepoImpl) Create(db *mongo.Database, rider *models.Rider) error {
 	riderCol := db.Collection(rider.CollectionName())
 	_, err := riderCol.InsertOne(context.Background(), rider)
 	return err
 }
 
-func FindByPhone(db *mongo.Database, phone string) (*models.Rider, error) {
+func (r *riderRepoImpl) FindByPhone(db *mongo.Database, phone string) (*models.Rider, error) {
 	rider := &models.Rider{}
 	riderCol := db.Collection(rider.CollectionName())
 	filter := bson.M{"phone": phone}
@@ -42,7 +43,7 @@ func FindByPhone(db *mongo.Database, phone string) (*models.Rider, error) {
 	return rider, nil
 }
 
-func FindByID(db *mongo.Database, ID string) (*models.Rider, error) {
+func (r *riderRepoImpl) FindByID(db *mongo.Database, ID string) (*models.Rider, error) {
 	rider := &models.Rider{}
 	_id, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
