@@ -12,6 +12,7 @@ import (
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
+	"github.com/techartificer/swiftex/models"
 	"github.com/techartificer/swiftex/validators"
 )
 
@@ -79,7 +80,12 @@ func riders(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	resp.Data = riders
+	resp.Data = func() []models.Rider {
+		if *riders == nil {
+			return []models.Rider{}
+		}
+		return *riders
+	}()
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

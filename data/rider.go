@@ -14,6 +14,7 @@ type RiderRepository interface {
 	Create(db *mongo.Database, rider *models.Rider) error
 	FindByPhone(db *mongo.Database, phone string) (*models.Rider, error)
 	FindByID(db *mongo.Database, ID string) (*models.Rider, error)
+	Riders(db *mongo.Database, lastID string) (*[]models.Rider, error)
 }
 
 type riderRepoImpl struct{}
