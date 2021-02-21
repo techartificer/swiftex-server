@@ -24,6 +24,7 @@ import (
 )
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
+	endpoint.GET("/", ordersAdmin, middlewares.JWTAuth(true))
 	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.PATCH("/id/:orderId/shopId/:shopId/", updateOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
@@ -31,8 +32,81 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.PATCH("/cancel/id/:orderId/shopId/:shopId/", cancelOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/track/:trackId/", trackOrder)
-	endpoint.GET("/dashboard/:shopId/", dashboard)
-	// endpoint.GET("/dashboard/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+}
+
+func ordersAdmin(ctx echo.Context) error {
+	resp := response.Response{}
+	lastID, startDate, endDate, shopID := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate"), ctx.QueryParam("shopId")
+	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	query := make(bson.M)
+	if shopID != "" {
+		_shopID, err := primitive.ObjectIDFromHex(shopID)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid shop ID"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.InvalidMongoID
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		query["shopId"] = _shopID
+	}
+	if lastID != "" {
+		id, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid last order ID"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.InvalidMongoID
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		query["_id"] = bson.M{"$lt": id}
+	}
+	if phone != "" {
+		query["recipientPhone"] = primitive.Regex{Pattern: phone, Options: ""}
+	}
+	if trackID != "" {
+		query["trackId"] = primitive.Regex{Pattern: trackID, Options: ""}
+	}
+	if startDate != "" && endDate != "" {
+		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tms := time.Unix(std/1000, 0) //std => startDate
+		end, err := strconv.ParseInt(endDate, 10, 64)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tme := time.Unix(end/1000, 0)
+		query["$and"] = []bson.M{{"createdAt": bson.M{"$gte": tms}}, {"createdAt": bson.M{"$lte": tme}}}
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	orders, err := orderRepo.Orders(db, query)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.SomethingWentWrong
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Status = http.StatusOK
+	resp.Data = orders
+	return resp.Send(ctx)
 }
 
 func dashboard(ctx echo.Context) error {
