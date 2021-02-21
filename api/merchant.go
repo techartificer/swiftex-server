@@ -105,7 +105,6 @@ func register(ctx echo.Context) error {
 func allMerchants(ctx echo.Context) error {
 	resp := response.Response{}
 	lastID := ctx.QueryParam("lastId")
-
 	merchantRepo := data.NewMerchantRepo()
 	db := database.GetDB()
 

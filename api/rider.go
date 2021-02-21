@@ -17,6 +17,7 @@ import (
 
 func RegisterRiderRoutes(endpoint *echo.Group) {
 	endpoint.POST("/create/", createRider, middlewares.JWTAuth(true))
+	endpoint.GET("/", riders, middlewares.JWTAuth(true))
 }
 
 func createRider(ctx echo.Context) error {
@@ -60,5 +61,25 @@ func createRider(ctx echo.Context) error {
 	}
 	resp.Data = rider
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+func riders(ctx echo.Context) error {
+	resp := response.Response{}
+	db := database.GetDB()
+	riderRepo := data.NewRiderRepo()
+	lastID := ctx.QueryParam("lastId")
+
+	riders, err := riderRepo.Riders(db, lastID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = riders
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

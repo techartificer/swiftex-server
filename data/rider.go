@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RiderRepository interface {
@@ -55,4 +56,27 @@ func (r *riderRepoImpl) FindByID(db *mongo.Database, ID string) (*models.Rider, 
 		return nil, err
 	}
 	return rider, nil
+}
+
+func (r *riderRepoImpl) Riders(db *mongo.Database, lastID string) (*[]models.Rider, error) {
+	rider := models.Rider{}
+	riderCollection := db.Collection(rider.CollectionName())
+	opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
+	query := make(bson.M)
+	if lastID != "" {
+		_lastID, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			return nil, err
+		}
+		query["_id"] = bson.M{"$lt": _lastID}
+	}
+	cursor, err := riderCollection.Find(context.Background(), query, opts)
+	if err != nil {
+		return nil, err
+	}
+	var riders []models.Rider
+	if err = cursor.All(context.Background(), &riders); err != nil {
+		return nil, err
+	}
+	return &riders, nil
 }
