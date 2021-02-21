@@ -12,6 +12,7 @@ import (
 	"github.com/techartificer/swiftex/lib/password"
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
+	"github.com/techartificer/swiftex/middlewares"
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -19,6 +20,7 @@ import (
 func RegisterMerchantRoutes(endpoint *echo.Group) {
 	endpoint.POST("/register/", register)
 	endpoint.GET("/is-available/:phone/", isUsernameAvilable)
+	endpoint.GET("/", allMerchants, middlewares.JWTAuth(true))
 }
 
 func isUsernameAvilable(ctx echo.Context) error {
@@ -97,5 +99,26 @@ func register(ctx echo.Context) error {
 	}
 	resp.Data = merchant
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+func allMerchants(ctx echo.Context) error {
+	resp := response.Response{}
+	lastID := ctx.QueryParam("lastId")
+
+	merchantRepo := data.NewMerchantRepo()
+	db := database.GetDB()
+
+	merchants, err := merchantRepo.Merchants(db, lastID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = merchants
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

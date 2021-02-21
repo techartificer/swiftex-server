@@ -27,7 +27,7 @@ type Rider struct {
 }
 
 func (D Rider) CollectionName() string {
-	return "Riders"
+	return "riders"
 }
 
 func initRiderIndex(db *mongo.Database) error {
