@@ -28,6 +28,6 @@ func LoadServer() {
 		Name:       viper.GetString("server.name"),
 		Host:       viper.GetString("server.host"),
 		Port:       viper.GetInt("server.port"),
-		BcryptCost: viper.GetInt("server.bcrypt_cost"),
+		BcryptCost: viper.GetInt("server.bcryptCost"),
 	}
 }

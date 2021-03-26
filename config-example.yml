@@ -1,0 +1,14 @@
+server:
+  host: 0.0.0.0
+  port: 4141
+  bcryptCost: secretKey
+  name: swiftex
+
+database:
+  URL: mongodb+srv://sadat:<password>@dokanio.zqlyd.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+  name: swiftex
+
+jwt: 
+  secret: asgdwqiu@qhewe480423
+  TTL: 1000
+  refreshTTL: 1000
