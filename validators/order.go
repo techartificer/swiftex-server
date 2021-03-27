@@ -37,6 +37,8 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}
+	created := constants.Created
+
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
 		RiderID:               nil,
@@ -60,12 +62,13 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 		DeliveryType:          body.DeliveryType,
 		PaymentStatus:         body.PaymentStatus,
 		IsCancelled:           false,
+		CurrentStatus:         &created,
 		IsAccepted:            false,
 		Status: []models.OrderStatus{
 			{
 				ID:     primitive.NewObjectID(),
 				Text:   constants.Pending,
-				Status: constants.Accepted,
+				Status: constants.Created,
 				Time:   time.Now().UTC(),
 			},
 		},

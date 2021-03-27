@@ -33,6 +33,7 @@ const (
 	Active string = "Active"
 	// Deactive status: user can not access
 	Deactive  string = "Deactive"
+	Created   string = "Created"
 	Delivered string = "Delivered"
 	Accepted  string = "Accepted"
 	Apporved  string = "Approved"
