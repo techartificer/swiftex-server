@@ -177,7 +177,19 @@ func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *mo
 	opt := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
-	update := bson.M{"$push": bson.M{"status": orderStatus}}
-	err = orderCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(updatedOrder)
+	query := make(bson.M)
+	if orderStatus.Status == constants.Accepted {
+		query["isAccepted"] = true
+	}
+	if orderStatus.Status == constants.Declined {
+		query["isCancelled"] = true
+	}
+	if orderStatus.Status == constants.Delivered {
+		query["deliveredAt"] = time.Now().UTC()
+	}
+	query["currentStatus"] = orderStatus.Status
+	orderStatusArray := []models.OrderStatus{*orderStatus}
+	push := bson.M{"status": bson.M{"$each": orderStatusArray, "$position": 0}}
+	err = orderCollection.FindOneAndUpdate(context.Background(), filter, bson.M{"$set": query, "$push": push}, &opt).Decode(updatedOrder)
 	return updatedOrder, err
 }
