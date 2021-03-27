@@ -15,6 +15,7 @@ type RiderRepository interface {
 	FindByPhone(db *mongo.Database, phone string) (*models.Rider, error)
 	FindByID(db *mongo.Database, ID string) (*models.Rider, error)
 	Riders(db *mongo.Database, lastID string) (*[]models.Rider, error)
+	RidersByHub(db *mongo.Database, hub string) (*[]models.Rider, error)
 }
 
 type riderRepoImpl struct{}
@@ -71,6 +72,23 @@ func (r *riderRepoImpl) Riders(db *mongo.Database, lastID string) (*[]models.Rid
 		}
 		query["_id"] = bson.M{"$lt": _lastID}
 	}
+	cursor, err := riderCollection.Find(context.Background(), query, opts)
+	if err != nil {
+		return nil, err
+	}
+	var riders []models.Rider
+	if err = cursor.All(context.Background(), &riders); err != nil {
+		return nil, err
+	}
+	return &riders, nil
+}
+
+func (r *riderRepoImpl) RidersByHub(db *mongo.Database, hub string) (*[]models.Rider, error) {
+	rider := models.Rider{}
+	riderCollection := db.Collection(rider.CollectionName())
+	opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
+	query := make(bson.M)
+	query["hub"] = hub
 	cursor, err := riderCollection.Find(context.Background(), query, opts)
 	if err != nil {
 		return nil, err
