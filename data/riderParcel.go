@@ -17,7 +17,7 @@ import (
 
 type RiderParcelRepository interface {
 	Create(db *mongo.Database, parcel *models.RiderParcel) (*models.Order, error)
-	ParcelsByRiderId(db *mongo.Database, riderID, lastID string) (*[]models.RiderParcel, error)
+	ParcelsByRiderId(db *mongo.Database, riderID, lastID string) (*[]bson.M, error)
 }
 
 type riderParcelImpl struct{}
@@ -83,9 +83,8 @@ func (p riderParcelImpl) Create(db *mongo.Database, parcel *models.RiderParcel) 
 	return &order, nil
 }
 
-func (p riderParcelImpl) ParcelsByRiderId(db *mongo.Database, riderID, lastID string) (*[]models.RiderParcel, error) {
+func (p riderParcelImpl) ParcelsByRiderId(db *mongo.Database, riderID, lastID string) (*[]bson.M, error) {
 	query := make(bson.M)
-
 	_riderID, err := primitive.ObjectIDFromHex(riderID)
 	if err != nil {
 		return nil, err
@@ -101,13 +100,18 @@ func (p riderParcelImpl) ParcelsByRiderId(db *mongo.Database, riderID, lastID st
 	}
 
 	riderParcelCollection := db.Collection(models.RiderParcel{}.CollectionName())
-	opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
-	cursor, err := riderParcelCollection.Find(context.Background(), query, opts)
+
+	matchStage := bson.D{{"$match", query}}
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", "orders"}, {"localField", "orderId"}, {"foreignField", "_id"}, {"as", "order"}}}}
+	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$order"}, {"preserveNullAndEmptyArrays", false}}}}
+	sortStage := bson.D{{"$sort", bson.D{{"_id", -1}}}}
+
+	cursor, err := riderParcelCollection.Aggregate(context.Background(), mongo.Pipeline{matchStage, lookupStage, unwindStage, sortStage})
 	if err != nil {
 		return nil, err
 	}
 
-	var parcels []models.RiderParcel
+	var parcels []bson.M
 	if err = cursor.All(context.Background(), &parcels); err != nil {
 		return nil, err
 	}
