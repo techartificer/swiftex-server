@@ -34,7 +34,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/track/:trackId/", trackOrder)
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.POST("/assign-order/", assignOrder, middlewares.JWTAuth(true))
-	endpoint.GET("/riders-parcel/:riderId/", ridersParcel /* middlewares.RiderJWTAuth() */)
+	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 }
 
 func ridersParcel(ctx echo.Context) error {

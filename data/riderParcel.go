@@ -113,11 +113,12 @@ func (p riderParcelImpl) ParcelsByRiderId(db *mongo.Database, riderID, lastID st
 	riderParcelCollection := db.Collection(models.RiderParcel{}.CollectionName())
 
 	matchStage := bson.D{{"$match", query}}
+	limitStage := bson.D{{"$limit", 10}}
 	lookupStage := bson.D{{"$lookup", bson.D{{"from", "orders"}, {"localField", "orderId"}, {"foreignField", "_id"}, {"as", "order"}}}}
 	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$order"}, {"preserveNullAndEmptyArrays", false}}}}
 	sortStage := bson.D{{"$sort", bson.D{{"_id", -1}}}}
 
-	cursor, err := riderParcelCollection.Aggregate(context.Background(), mongo.Pipeline{matchStage, lookupStage, unwindStage, sortStage})
+	cursor, err := riderParcelCollection.Aggregate(context.Background(), mongo.Pipeline{matchStage, limitStage, lookupStage, unwindStage, sortStage})
 	if err != nil {
 		return nil, err
 	}
