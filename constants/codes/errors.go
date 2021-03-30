@@ -25,6 +25,7 @@ const (
 	MerchantNotFound             ErrorCode = "404005"
 	OrderNotFound                ErrorCode = "404006"
 	RiderNotFound                ErrorCode = "404007"
+	TransactionNotFound          ErrorCode = "404007"
 	AdminAlreadyExist            ErrorCode = "409001"
 	MerchantAlreadyExist         ErrorCode = "409002"
 	ShopAlreadyExist             ErrorCode = "409003"
