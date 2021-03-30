@@ -76,7 +76,11 @@ func (p riderParcelImpl) Create(db *mongo.Database, parcel *models.RiderParcel) 
 		}
 
 		updatedOrder := models.Order{}
-		query := bson.M{"$set": bson.M{"currentStatus": constants.InTransit}, "$push": push}
+		query := bson.M{"$set": bson.M{
+			"currentStatus": constants.InTransit,
+			"riderId":       &parcel.RiderID,
+		}, "$push": push}
+
 		err = orderCollection.FindOneAndUpdate(context.Background(), filter, query, &opt).Decode(&updatedOrder)
 		if err != nil {
 			return nil, err

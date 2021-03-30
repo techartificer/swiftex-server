@@ -2,16 +2,20 @@ package data
 
 import (
 	"context"
+	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
 type ShopRepository interface {
-	Create(db *mongo.Database, shop *models.Shop) error
+	Create(db *mongo.Database, shop *models.Shop) (*models.Transaction, error)
 	ShopsByOwnerId(db *mongo.Database, owner primitive.ObjectID) (*[]models.Shop, error)
 	ShopByID(db *mongo.Database, ID string) (*models.Shop, error)
 	UpdateShopByID(db *mongo.Database, ID string, shop *models.Shop) (*models.Shop, error)
@@ -30,10 +34,42 @@ func NewShopRepo() ShopRepository {
 	return shopRepository
 }
 
-func (s *shopRepositoryImpl) Create(db *mongo.Database, shop *models.Shop) error {
-	shopCollection := db.Collection(shop.CollectionName())
-	_, err := shopCollection.InsertOne(context.Background(), shop)
-	return err
+func (s *shopRepositoryImpl) Create(db *mongo.Database, shop *models.Shop) (*models.Transaction, error) {
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+	session, err := db.Client().StartSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.EndSession(context.Background())
+	callBack := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		trx := models.Transaction{
+			ID:        primitive.NewObjectID(),
+			ShopID:    shop.ID,
+			Owner:     shop.Owner,
+			Balance:   0,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		}
+		trxCollection := db.Collection(trx.CollectionName())
+		shopCollection := db.Collection(shop.CollectionName())
+
+		if _, err := shopCollection.InsertOne(sessionCtx, shop); err != nil {
+			return nil, err
+		}
+		if _, err := trxCollection.InsertOne(sessionCtx, trx); err != nil {
+			return nil, err
+		}
+		return &trx, nil
+	}
+	result, err := session.WithTransaction(context.Background(), callBack, txnOpts)
+	if err != nil {
+		return nil, err
+	}
+	transaction := models.Transaction{}
+	mapstructure.Decode(result, &transaction)
+	return &transaction, err
 }
 
 func (a *shopRepositoryImpl) Search(db *mongo.Database, query primitive.M) (*[]models.Shop, error) {

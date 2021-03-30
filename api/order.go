@@ -33,7 +33,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/track/:trackId/", trackOrder)
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
-	endpoint.POST("/assign-order/", assignOrder, middlewares.JWTAuth(true))
+	endpoint.POST("/assign-rider/", assignRider, middlewares.JWTAuth(true))
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 }
 
@@ -63,7 +63,7 @@ func ridersParcel(ctx echo.Context) error {
 	return resp.Send(ctx)
 }
 
-func assignOrder(ctx echo.Context) error {
+func assignRider(ctx echo.Context) error {
 	resp := response.Response{}
 	body, err := validators.ValidateRiderParcelCreate(ctx)
 	if err != nil {

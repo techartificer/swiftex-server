@@ -69,8 +69,8 @@ func shopCreate(ctx echo.Context) error {
 	shopRepo := data.NewShopRepo()
 	shop.Owner = ctx.Get(constants.UserID).(primitive.ObjectID)
 	shop.ShopID = slug.Make(shop.Name)
-
-	if err := shopRepo.Create(db, shop); err != nil {
+	trx, err := shopRepo.Create(db, shop)
+	if err != nil {
 		logger.Log.Errorln(err)
 		if errors.IsMongoDupError(err) {
 			resp.Title = "Shop already exist"
@@ -85,7 +85,10 @@ func shopCreate(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	resp.Data = shop
+	resp.Data = map[string]interface{}{
+		"shop":        shop,
+		"transaction": trx,
+	}
 	resp.Status = http.StatusCreated
 	return resp.Send(ctx)
 }
