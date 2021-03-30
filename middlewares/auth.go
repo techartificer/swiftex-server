@@ -12,6 +12,49 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func setHeader(resp response.Response, ctx echo.Context, claims *jwt.Claims) error {
+	userID, err := primitive.ObjectIDFromHex(claims.UserID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.SomethingWentWrong
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	ctx.Set(constants.UserID, userID)
+	ctx.Set(constants.Role, claims.Audience)
+	ctx.Set(constants.Phone, claims.Phone)
+	return nil
+}
+
+func RiderJWTAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			resp := response.Response{}
+			claims, _, err := jwt.ExtractAndValidateToken(ctx)
+			if err != nil {
+				logger.Log.Errorln(err)
+				resp.Status = http.StatusUnauthorized
+				resp.Code = codes.InvalidAuthorizationToken
+				resp.Title = "Unauthorized request"
+				resp.Errors = err
+				return resp.Send(ctx)
+			}
+			if claims.AccountType != constants.AdminType && claims.AccountType != constants.RiderType {
+				resp.Status = http.StatusUnauthorized
+				resp.Code = codes.InvalidAuthorizationToken
+				resp.Title = "You are not allowed"
+				return resp.Send(ctx)
+			}
+			if err := setHeader(resp, ctx, claims); err != nil {
+				return err
+			}
+			return next(ctx)
+		}
+	}
+}
+
 func JWTAuth(isAdmin bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
@@ -31,18 +74,9 @@ func JWTAuth(isAdmin bool) echo.MiddlewareFunc {
 				resp.Title = "You are not allowed"
 				return resp.Send(ctx)
 			}
-			userID, err := primitive.ObjectIDFromHex(claims.UserID)
-			if err != nil {
-				logger.Log.Errorln(err)
-				resp.Title = "Something went wrong"
-				resp.Status = http.StatusInternalServerError
-				resp.Code = codes.SomethingWentWrong
-				resp.Errors = err
-				return resp.Send(ctx)
+			if err := setHeader(resp, ctx, claims); err != nil {
+				return err
 			}
-			ctx.Set(constants.UserID, userID)
-			ctx.Set(constants.Role, claims.Audience)
-			ctx.Set(constants.Phone, claims.Phone)
 			return next(ctx)
 		}
 	}

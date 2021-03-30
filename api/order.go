@@ -34,6 +34,33 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/track/:trackId/", trackOrder)
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.POST("/assign-order/", assignOrder, middlewares.JWTAuth(true))
+	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
+}
+
+func ridersParcel(ctx echo.Context) error {
+	resp := response.Response{}
+	riderID := ctx.Param("riderId")
+	lastID := ctx.QueryParam("lastId")
+
+	db := database.GetDB()
+	ridersParcelRepo := data.NewRiderParcelRepo()
+	orders, err := ridersParcelRepo.ParcelsByRiderId(db, riderID, lastID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = func() []models.RiderParcel {
+		if *orders == nil {
+			return []models.RiderParcel{}
+		}
+		return *orders
+	}()
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func assignOrder(ctx echo.Context) error {
@@ -442,7 +469,7 @@ func orders(ctx echo.Context) error {
 		logger.Log.Errorln(err)
 		resp.Title = "Something went wrong"
 		resp.Status = http.StatusInternalServerError
-		resp.Code = codes.SomethingWentWrong
+		resp.Code = codes.DatabaseQueryFailed
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
