@@ -54,6 +54,9 @@ func (p riderParcelImpl) Create(db *mongo.Database, parcel *models.RiderParcel) 
 		if *order.CurrentStatus == constants.InTransit {
 			return nil, errors.New(string(codes.OrderAlreadyInTransit))
 		}
+		if *order.CurrentStatus == constants.Delivered || order.DeliveredAt != nil {
+			return nil, errors.New(string(codes.OrderAlreadyDelevired))
+		}
 		if _, err := riderParcelCollection.InsertOne(sessionCtx, parcel); err != nil {
 			return nil, err
 		}
