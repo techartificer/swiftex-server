@@ -164,3 +164,41 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 	}
 	return order, nil
 }
+
+type OrderDeliverReq struct {
+	Payment    float64        `validate:"required,number,gt=-1" json:"payment"`
+	PaymenType models.TrxType `validate:"required" json:"paymentType"`
+	Remarks    string         `validate:"omitempty" json:"remarks"`
+	ShopID     string         `validate:"required" json:"shopId"`
+}
+
+func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
+	body := OrderDeliverReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	_shopID, err := primitive.ObjectIDFromHex(body.ShopID)
+	if err != nil {
+		return nil, err
+	}
+	orderID := ctx.Param("orderId")
+	UserID := ctx.Get(constants.UserID).(primitive.ObjectID)
+	_orderID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		return nil, err
+	}
+	trxHistory := &models.TrxHistory{
+		ID:          primitive.NewObjectID(),
+		Remarks:     body.Remarks,
+		Payment:     body.Payment,
+		CreatedBy:   UserID,
+		PaymentType: body.PaymenType,
+		OrderID:     &_orderID,
+		ShopID:      _shopID,
+		CreatedAt:   time.Now().UTC(),
+	}
+	return trxHistory, nil
+}

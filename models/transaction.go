@@ -12,7 +12,7 @@ type Transaction struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	ShopID    primitive.ObjectID `bson:"shopId,omitempty" json:"shopId"`
 	Owner     primitive.ObjectID `bson:"owner,omitempty" json:"owner"`
-	Balance   int64              `bson:"balance,omitempty" json:"balance"`
+	Balance   float64            `bson:"balance,omitempty" json:"balance"`
 	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
 }

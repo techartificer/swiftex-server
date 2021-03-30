@@ -47,6 +47,11 @@ const (
 var AllStatus = []string{Active, Deactive}
 
 const (
+	COD  string = "COD"
+	PAID string = "PAID"
+)
+
+const (
 	Role   string = "role"
 	Phone  string = "phone"
 	UserID string = "userId"

@@ -35,6 +35,56 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.POST("/assign-rider/", assignRider, middlewares.JWTAuth(true))
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
+	endpoint.POST("/deliver/:orderId/", deliverParcel, middlewares.RiderJWTAuth())
+}
+
+func deliverParcel(ctx echo.Context) error {
+	resp := response.Response{}
+	trxHistory, err := validators.ValidateOrderDeliver(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid delivery request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidTransactionData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	trxRepo := data.NewTransactionRepo()
+	db := database.GetDB()
+
+	result, err := trxRepo.AddTrxHistory(db, trxHistory)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if mongo.ErrNoDocuments == err {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		if err.Error() == string(codes.OrderAlreadyDelevired) {
+			resp.Title = "Order already delivered"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.OrderAlreadyDelevired
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		if err.Error() == string(codes.TransactionNotFound) {
+			resp.Title = "Transaction not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.TransactionNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = result
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func ridersParcel(ctx echo.Context) error {
