@@ -32,6 +32,7 @@ const (
 	InvalidLimit                 ErrorCode = "422001"
 	InvalidMongoID               ErrorCode = "422002"
 	OrderAlreadyDelevired        ErrorCode = "422003"
+	OrderAlreadyInTransit        ErrorCode = "422004"
 	DatabaseQueryFailed          ErrorCode = "500001"
 	UserLoginFailed              ErrorCode = "500002"
 	TokenRefreshFailed           ErrorCode = "500003"

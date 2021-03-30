@@ -2,10 +2,12 @@ package data
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/techartificer/swiftex/constants"
+	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,6 +45,15 @@ func (p riderParcelImpl) Create(db *mongo.Database, parcel *models.RiderParcel) 
 	defer session.EndSession(context.Background())
 
 	callBack := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		order := models.Order{}
+		orderCollection := db.Collection(order.CollectionName())
+		err := orderCollection.FindOne(context.Background(), bson.M{"_id": parcel.OrderID}).Decode(&order)
+		if err != nil {
+			return nil, err
+		}
+		if *order.CurrentStatus == constants.InTransit {
+			return nil, errors.New(string(codes.OrderAlreadyInTransit))
+		}
 		if _, err := riderParcelCollection.InsertOne(sessionCtx, parcel); err != nil {
 			return nil, err
 		}
@@ -63,8 +74,8 @@ func (p riderParcelImpl) Create(db *mongo.Database, parcel *models.RiderParcel) 
 		opt := options.FindOneAndUpdateOptions{
 			ReturnDocument: &after,
 		}
+
 		updatedOrder := models.Order{}
-		orderCollection := db.Collection(updatedOrder.CollectionName())
 		query := bson.M{"$set": bson.M{"currentStatus": constants.InTransit}, "$push": push}
 		err = orderCollection.FindOneAndUpdate(context.Background(), filter, query, &opt).Decode(&updatedOrder)
 		if err != nil {

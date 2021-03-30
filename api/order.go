@@ -86,6 +86,13 @@ func assignOrder(ctx echo.Context) error {
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
+		if err.Error() == string(codes.OrderAlreadyInTransit) {
+			resp.Title = "Order already assigned to a rider"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.OrderAlreadyInTransit
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 		resp.Title = "Something went wrong"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed
