@@ -161,7 +161,7 @@ func (o *orderRepositoryImpl) UpdateOrder(db *mongo.Database, order *models.Orde
 	}
 	update := bson.D{{"$set", order}}
 	updatedOrder := &models.Order{}
-	err = orderCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(updatedOrder)
+	err = orderCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(&updatedOrder)
 	return updatedOrder, err
 }
 

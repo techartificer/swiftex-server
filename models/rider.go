@@ -26,7 +26,7 @@ type Rider struct {
 	UpdatedAt       time.Time           `bson:"updatedAt" json:"updatedAt"`
 }
 
-func (D Rider) CollectionName() string {
+func (r Rider) CollectionName() string {
 	return "riders"
 }
 

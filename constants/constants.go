@@ -36,6 +36,7 @@ const (
 	Created   string = "Created"
 	Delivered string = "Delivered"
 	Accepted  string = "Accepted"
+	Assigned  string = "Assigned"
 	Apporved  string = "Approved"
 	Pending   string = "Pending"
 	Declined  string = "Declined"

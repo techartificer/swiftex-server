@@ -10,5 +10,5 @@ database:
 
 jwt: 
   secret: asgdwqiu@qhewe480423
-  TTL: 1000
-  refreshTTL: 1000
+  TTL: 1000 #seconds
+  refreshTTL: 1000 #minutes

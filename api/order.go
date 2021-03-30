@@ -33,6 +33,44 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/track/:trackId/", trackOrder)
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.POST("/assign-order/", assignOrder, middlewares.JWTAuth(true))
+}
+
+func assignOrder(ctx echo.Context) error {
+	resp := response.Response{}
+	body, err := validators.ValidateRiderParcelCreate(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid assign parcel request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidAssignParcelData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	db := database.GetDB()
+	riderParcelRepo := data.NewRiderParcelRepo()
+	order, err := riderParcelRepo.Create(db, body)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if mongo.ErrNoDocuments == err {
+			resp.Title = "Order not exist"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Status = http.StatusCreated
+	resp.Data = map[string]interface{}{
+		"order":       order,
+		"riderParcel": body,
+	}
+	return resp.Send(ctx)
 }
 
 func ordersAdmin(ctx echo.Context) error {
@@ -417,7 +455,7 @@ func orderCreate(ctx echo.Context) error {
 	resp := response.Response{}
 	order, err := validators.ValidateOrderCreate(ctx)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorln(err)
 		resp.Title = "Invalid order create request data"
 		resp.Status = http.StatusBadRequest
 		resp.Code = codes.InvalidShopCreateData

@@ -45,5 +45,8 @@ func InitializeIndex(db *mongo.Database) error {
 	if err := initRiderIndex(db); err != nil {
 		return err
 	}
+	if err := initRiderParcelIndex(db); err != nil {
+		return err
+	}
 	return nil
 }
