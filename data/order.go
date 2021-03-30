@@ -86,15 +86,16 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 		errChan <- err1
 		returnedChan <- cnt
 	}()
-	err = <-errChan
-	if err != nil {
-		return nil, err
-	}
 	data := make(map[string]int64)
 	data["total"] = <-totalChan
 	data["delivered"] = <-deliveredChan
 	data["returned"] = <-returnedChan
 	data["inTransit"] = <-transitChan
+
+	err = <-errChan
+	if err != nil {
+		return nil, err
+	}
 	return data, err
 }
 
