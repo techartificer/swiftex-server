@@ -63,7 +63,7 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 	defer close(deliveredChan)
 	go func() {
 		query2 := helper.CopyMap(query)
-		query2["deliverdAt"] = bson.M{"$gt": time.Time{}}
+		query2["deliveredAt"] = bson.M{"$gt": time.Time{}}
 		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
 		errChan <- err1
 		deliveredChan <- cnt

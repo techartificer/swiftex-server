@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/labstack/echo/v4"
@@ -26,6 +27,52 @@ func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.GET("/id/:shopId/", shopByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.PATCH("/id/:shopId/", updateShop, middlewares.JWTAuth(false), middlewares.IsShopOwner())
 	endpoint.GET("/search/", searchShop, middlewares.JWTAuth(true))
+	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+}
+
+func dashboard(ctx echo.Context) error {
+	resp := response.Response{}
+	shopID := ctx.Param("shopId")
+	startDate, endDate := ctx.QueryParam("startDate"), ctx.QueryParam("endData")
+	var tms, tme time.Time
+	if startDate != "" && endDate != "" {
+		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tms = time.Unix(std/1000, 0) //std => startDate
+
+		end, err := strconv.ParseInt(endDate, 10, 64)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Invalid timestamp"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		tme = time.Unix(end/1000, 0)
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+
+	dashboard, err := orderRepo.Dashboard(db, shopID, &tms, &tme)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = dashboard
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
 }
 
 func searchShop(ctx echo.Context) error {

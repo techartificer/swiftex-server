@@ -32,7 +32,6 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.PATCH("/cancel/id/:orderId/shopId/:shopId/", cancelOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/track/:trackId/", trackOrder)
-	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.POST("/assign-rider/", assignRider, middlewares.JWTAuth(true))
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 	endpoint.POST("/deliver/:orderId/", deliverParcel, middlewares.RiderJWTAuth())
@@ -235,51 +234,6 @@ func ordersAdmin(ctx echo.Context) error {
 	}
 	resp.Status = http.StatusOK
 	resp.Data = orders
-	return resp.Send(ctx)
-}
-
-func dashboard(ctx echo.Context) error {
-	resp := response.Response{}
-	shopID := ctx.Param("shopId")
-	startDate, endDate := ctx.QueryParam("startDate"), ctx.QueryParam("endData")
-	var tms, tme time.Time
-	if startDate != "" && endDate != "" {
-		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
-		if err != nil {
-			logger.Log.Errorln(err)
-			resp.Title = "Invalid timestamp"
-			resp.Status = http.StatusUnprocessableEntity
-			resp.Code = codes.SomethingWentWrong
-			resp.Errors = err
-			return resp.Send(ctx)
-		}
-		tms = time.Unix(std/1000, 0) //std => startDate
-
-		end, err := strconv.ParseInt(endDate, 10, 64)
-		if err != nil {
-			logger.Log.Errorln(err)
-			resp.Title = "Invalid timestamp"
-			resp.Status = http.StatusUnprocessableEntity
-			resp.Code = codes.SomethingWentWrong
-			resp.Errors = err
-			return resp.Send(ctx)
-		}
-		tme = time.Unix(end/1000, 0)
-	}
-	db := database.GetDB()
-	orderRepo := data.NewOrderRepo()
-
-	dashboard, err := orderRepo.Dashboard(db, shopID, &tms, &tme)
-	if err != nil {
-		logger.Log.Errorln(err)
-		resp.Title = "Something went wrong"
-		resp.Status = http.StatusInternalServerError
-		resp.Code = codes.DatabaseQueryFailed
-		resp.Errors = err
-		return resp.Send(ctx)
-	}
-	resp.Data = dashboard
-	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
 
