@@ -166,10 +166,9 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 }
 
 type OrderDeliverReq struct {
-	Payment    float64        `validate:"required,number,gt=-1" json:"payment"`
-	PaymenType models.TrxType `validate:"required" json:"paymentType"`
-	Remarks    string         `validate:"omitempty" json:"remarks"`
-	ShopID     string         `validate:"required" json:"shopId"`
+	Payment float64 `validate:"required,number,gt=-1" json:"payment"`
+	Remarks string  `validate:"omitempty" json:"remarks"`
+	ShopID  string  `validate:"required" json:"shopId"`
 }
 
 func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
@@ -195,7 +194,7 @@ func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
 		Remarks:     body.Remarks,
 		Payment:     body.Payment,
 		CreatedBy:   UserID,
-		PaymentType: body.PaymenType,
+		PaymentType: models.IN,
 		OrderID:     &_orderID,
 		ShopID:      _shopID,
 		CreatedAt:   time.Now().UTC(),

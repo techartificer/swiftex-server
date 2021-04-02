@@ -25,6 +25,11 @@ type TransactionRepository interface {
 
 type transactionRepoImpl struct{}
 
+type trxOrder struct {
+	Trx   *models.Transaction
+	Order *models.Order
+}
+
 var (
 	create          sync.Once
 	transactionRepo TransactionRepository
@@ -107,18 +112,22 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		if _, err1 := trxHistoryCollection.InsertOne(sessionCtx, trxHistory); err1 != nil {
 			return nil, err
 		}
+		ret := trxOrder{Trx: trx, Order: &order}
 
-		return trx, nil
+		return ret, nil
 	}
 	result, err := session.WithTransaction(context.Background(), callBack, txnOpts)
 	if err != nil {
 		return nil, err
 	}
 	trx := models.Transaction{}
-	mapstructure.Decode(result, &trx)
+	order := models.Order{}
+	mapstructure.Decode(result.(trxOrder).Trx, &trx)
+	mapstructure.Decode(result.(trxOrder).Order, &order)
 	ret := map[string]interface{}{
 		"transaction": trx,
 		"history":     trxHistory,
+		"order":       order,
 	}
 	return &ret, nil
 }
