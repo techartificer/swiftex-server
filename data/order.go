@@ -21,7 +21,7 @@ type OrderRepository interface {
 	AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error)
 	OrderByID(db *mongo.Database, ID string) (*models.Order, error)
 	TrackOrder(db *mongo.Database, trackID string) (*models.Order, error)
-	Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (map[string]int64, error)
+	Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (*map[string]int64, error)
 }
 
 type orderRepositoryImpl struct{}
@@ -35,7 +35,7 @@ func NewOrderRepo() OrderRepository {
 	return orderRepository
 }
 
-func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (map[string]int64, error) {
+func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (*map[string]int64, error) {
 	order := &models.Order{}
 	orderCollection := db.Collection(order.CollectionName())
 	_shopID, err := primitive.ObjectIDFromHex(shopID)
@@ -53,7 +53,6 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 	totalChan := make(chan int64)
 	defer close(totalChan)
 	errChan := make(chan error, 5)
-	defer close(errChan)
 	go func() {
 		cnt, err1 := orderCollection.CountDocuments(context.Background(), query)
 		errChan <- err1
@@ -63,7 +62,7 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 	defer close(deliveredChan)
 	go func() {
 		query2 := helper.CopyMap(query)
-		query2["deliverdAt"] = bson.M{"$gt": time.Time{}}
+		query2["deliveredAt"] = bson.M{"$gt": time.Time{}}
 		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
 		errChan <- err1
 		deliveredChan <- cnt
@@ -91,12 +90,13 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 	data["delivered"] = <-deliveredChan
 	data["returned"] = <-returnedChan
 	data["inTransit"] = <-transitChan
-
-	err = <-errChan
-	if err != nil {
-		return nil, err
+	close(errChan)
+	for cerr := range errChan {
+		if cerr != nil {
+			return nil, cerr
+		}
 	}
-	return data, err
+	return &data, err
 }
 
 func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) error {

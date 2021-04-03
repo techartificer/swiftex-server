@@ -25,6 +25,11 @@ type TransactionRepository interface {
 
 type transactionRepoImpl struct{}
 
+type trxOrder struct {
+	Trx   *models.Transaction
+	Order *models.Order
+}
+
 var (
 	create          sync.Once
 	transactionRepo TransactionRepository
@@ -107,18 +112,22 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		if _, err1 := trxHistoryCollection.InsertOne(sessionCtx, trxHistory); err1 != nil {
 			return nil, err
 		}
+		ret := trxOrder{Trx: trx, Order: &order}
 
-		return trx, nil
+		return ret, nil
 	}
 	result, err := session.WithTransaction(context.Background(), callBack, txnOpts)
 	if err != nil {
 		return nil, err
 	}
 	trx := models.Transaction{}
-	mapstructure.Decode(result, &trx)
+	order := models.Order{}
+	mapstructure.Decode(result.(trxOrder).Trx, &trx)
+	mapstructure.Decode(result.(trxOrder).Order, &order)
 	ret := map[string]interface{}{
 		"transaction": trx,
 		"history":     trxHistory,
+		"order":       order,
 	}
 	return &ret, nil
 }
@@ -130,7 +139,6 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 	}
 
 	errChan := make(chan error, 3)
-	defer close(errChan)
 	trxChan := make(chan *models.Transaction)
 	defer close(trxChan)
 	trxHistoryChan := make(chan *[]models.TrxHistory)
@@ -138,6 +146,7 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 
 	trx := &models.Transaction{}
 	trxCollection := db.Collection(trx.CollectionName())
+	trxHistoryCollection := db.Collection(models.TrxHistory{}.CollectionName())
 	query := bson.M{"shopId": _shopID}
 
 	go func() {
@@ -148,20 +157,23 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 
 	go func() {
 		opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
-		cursor, err := trxCollection.Find(context.Background(), query, opts)
+		cursor, err := trxHistoryCollection.Find(context.Background(), bson.M{}, opts)
 		errChan <- err
-		var trxHistory *[]models.TrxHistory
-		err1 := cursor.All(context.Background(), &trxHistory)
+		var result []models.TrxHistory
+		err1 := cursor.All(context.Background(), &result)
 		errChan <- err1
-		trxHistoryChan <- trxHistory
+		trxHistoryChan <- &result
 	}()
 
 	result := map[string]interface{}{
 		"transaction":        <-trxChan,
 		"transactionHistory": <-trxHistoryChan,
 	}
-	if err := <-errChan; err != nil {
-		return nil, err
+	close(errChan)
+	for cerr := range errChan {
+		if cerr != nil {
+			return nil, cerr
+		}
 	}
 	return &result, nil
 }
