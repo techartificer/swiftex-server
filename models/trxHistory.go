@@ -35,7 +35,7 @@ func (trx TrxHistory) CollectionName() string {
 func initTrxHistoryIndex(db *mongo.Database) error {
 	trx := TrxHistory{}
 	trxCol := db.Collection(trx.CollectionName())
-	if err := createIndex(trxCol, bson.M{"trxId": 1}, false); err != nil {
+	if err := createIndex(trxCol, bson.M{"shopId": 1}, false); err != nil {
 		return err
 	}
 	return nil
