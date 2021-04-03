@@ -58,3 +58,8 @@ const (
 )
 
 const TrackIDSize = 8
+
+const (
+	Express string = "Express"
+	Regular string = "Regular"
+)

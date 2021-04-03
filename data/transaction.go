@@ -157,7 +157,7 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 
 	go func() {
 		opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
-		cursor, err := trxHistoryCollection.Find(context.Background(), bson.M{}, opts)
+		cursor, err := trxHistoryCollection.Find(context.Background(), query, opts)
 		errChan <- err
 		var result []models.TrxHistory
 		err1 := cursor.All(context.Background(), &result)

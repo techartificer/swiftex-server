@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants"
+	"github.com/techartificer/swiftex/lib/charge"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -26,6 +27,7 @@ type OrderCreateReq struct {
 	PickHub               string    `validate:"required" json:"pickHub"`
 	Comments              string    `validate:"omitempty,max=300" json:"comments"`
 	NumberOfItems         int       `validate:"required" json:"numberOfItems"`
+	Weight                float32   `validate:"required" json:"weight"`
 	DeliveryType          string    `validate:"required" json:"deliveryType"`
 }
 
@@ -37,13 +39,14 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}
+	_charge := charge.Calculate(body.Weight, body.DeliveryType, body.RecipientCity)
 	created := constants.Created
-
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
 		RiderID:               nil,
 		ShopModeratorID:       nil,
 		MerchantID:            nil,
+		Charge:                _charge,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,
