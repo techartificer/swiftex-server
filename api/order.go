@@ -303,11 +303,13 @@ func cancelOrder(ctx echo.Context) error {
 	resp := response.Response{}
 	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
 
+	cancelled := constants.Cancelled
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 	order := &models.Order{
-		IsCancelled: true,
-		UpdatedAt:   time.Now().UTC(),
+		CurrentStatus: &cancelled,
+		IsCancelled:   true,
+		UpdatedAt:     time.Now().UTC(),
 	}
 	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
 	if err != nil {
