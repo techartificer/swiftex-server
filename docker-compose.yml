@@ -1,10 +1,10 @@
-version: "3.1"
+version: '3.3'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - 4141:4141
+    web:
+        image: swiftex
+        container_name: swiftex
+        restart: unless-stopped
+        ports:
+            - 4141:4141
+        command: ["swiftex"]
