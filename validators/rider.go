@@ -18,6 +18,7 @@ type RiderCreate struct {
 	Salary   int32  `json:"Salary,omitempty" validate:"required"`
 	Address  string `json:"address,omitempty" validate:"required"`
 	Remark   string `json:"remark,omitempty" validate:"required"`
+	Hub      string `json:"hub,omitempty" validate:"required"`
 }
 
 func ValidateRiderReq(ctx echo.Context) (*models.Rider, error) {
@@ -40,6 +41,7 @@ func ValidateRiderReq(ctx echo.Context) (*models.Rider, error) {
 		Salary:    body.Salary,
 		Address:   body.Address,
 		Remark:    body.Remark,
+		Hub:       body.Hub,
 		CreatedBy: &creator,
 		CreatedAt: time.Now().UTC(),
 	}
