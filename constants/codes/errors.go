@@ -35,6 +35,7 @@ const (
 	InvalidMongoID               ErrorCode = "422002"
 	OrderAlreadyDelevired        ErrorCode = "422003"
 	OrderAlreadyInTransit        ErrorCode = "422004"
+	OrderNotAcceptedYet          ErrorCode = "422005"
 	DatabaseQueryFailed          ErrorCode = "500001"
 	UserLoginFailed              ErrorCode = "500002"
 	TokenRefreshFailed           ErrorCode = "500003"

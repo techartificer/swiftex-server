@@ -75,6 +75,13 @@ func deliverParcel(ctx echo.Context) error {
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
+		if err.Error() == string(codes.OrderNotAcceptedYet) {
+			resp.Title = "Order not accepted yet"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.OrderNotAcceptedYet
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 		resp.Title = "Something went wrong"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed

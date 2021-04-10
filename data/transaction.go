@@ -65,6 +65,10 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		if order.DeliveredAt != nil {
 			return nil, errors.NewError(string(codes.OrderAlreadyDelevired))
 		}
+		if !order.IsAccepted {
+			return nil, errors.NewError(string(codes.OrderNotAcceptedYet))
+		}
+
 		t := time.Now().UTC() // time
 		OrderStatus := models.OrderStatus{
 			ID:            primitive.NewObjectID(),
