@@ -1,6 +1,7 @@
 package charge
 
 import (
+	"math"
 	"strings"
 
 	"github.com/techartificer/swiftex/constants"
@@ -12,11 +13,10 @@ const (
 
 func Calculate(weight float32, deliverType string, city string) float64 {
 	var charge float64 = 60.0
-	if weight > 1.00 && weight <= 2.00 {
-		charge += 20
-	} else if weight > 2.00 {
-		charge += 40
-	}
+
+	cweight := math.Ceil(float64(weight)) - 1
+	charge += (20 * cweight)
+
 	isInsideDhaka := true
 	if strings.ToLower(city) != strings.ToLower(Dhaka) {
 		charge += 70

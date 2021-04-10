@@ -27,7 +27,7 @@ type OrderCreateReq struct {
 	PickHub               string    `validate:"required" json:"pickHub"`
 	Comments              string    `validate:"omitempty,max=300" json:"comments"`
 	NumberOfItems         int       `validate:"required" json:"numberOfItems"`
-	Weight                float32   `validate:"required" json:"weight"`
+	Weight                float32   `validate:"required,number,gt=0" json:"weight"`
 	DeliveryType          string    `validate:"required" json:"deliveryType"`
 }
 
@@ -130,6 +130,7 @@ type OrderUpdateReq struct {
 	Comments              string             `validate:"omitempty,max=300" json:"comments"`
 	NumberOfItems         int                `validate:"omitempty" json:"numberOfItems"`
 	DeliveryType          string             `validate:"omitempty" json:"deliveryType"`
+	Weight                float32            `validate:"omitempty,number,gt=0" json:"weight"`
 }
 
 func UpdateOrder(ctx echo.Context) (*models.Order, error) {
