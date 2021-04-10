@@ -9,12 +9,14 @@ import (
 )
 
 type Transaction struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	ShopID    primitive.ObjectID `bson:"shopId,omitempty" json:"shopId"`
-	Owner     primitive.ObjectID `bson:"owner,omitempty" json:"owner"`
-	Balance   float64            `bson:"balance,omitempty" json:"balance"`
-	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ShopID           primitive.ObjectID `bson:"shopId,omitempty" json:"shopId"`
+	Owner            primitive.ObjectID `bson:"owner,omitempty" json:"owner"`
+	Balance          float64            `bson:"balance,omitempty" json:"balance"`
+	TrxCode          string             `bson:"trxCode,omitempty" json:"-"`
+	TrxCodeExpiresAt int64              `bson:"trxCodeExpiresAt,omitempty" json:"-"`
+	CreatedAt        time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
+	UpdatedAt        time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
 
 // CollectionName returns name of the models
