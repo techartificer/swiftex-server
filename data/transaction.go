@@ -46,6 +46,12 @@ func NewTransactionRepo() TransactionRepository {
 	return transactionRepo
 }
 
+func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, name, contact string) (*[]models.Transaction, error) {
+	// query := make(bson.M)
+	// query["amount"]
+	return nil, nil
+}
+
 func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error) {
 	wc := writeconcern.New(writeconcern.WMajority())
 	rc := readconcern.Snapshot()

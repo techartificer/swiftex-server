@@ -19,6 +19,12 @@ func RegisterTransactionRoutes(endpoint *echo.Group) {
 	endpoint.PATCH("/generate-trx-code/:shopId/", generateTrxCode, middlewares.JWTAuth(false), middlewares.IsShopOwnerStrict())
 }
 
+func cashOutRequests(ctx echo.Context) error {
+	resp := response.Response{}
+
+	return resp.Send(ctx)
+}
+
 func transactionByShopId(ctx echo.Context) error {
 	resp := response.Response{}
 	shopID := ctx.Param("shopId")

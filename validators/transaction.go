@@ -3,7 +3,7 @@ package validators
 import "github.com/labstack/echo/v4"
 
 type GenerateTrxCodeReq struct {
-	Amount int64 `json:"amount,omitempty"  validate:"required,number,gt=0"`
+	Amount int64 `json:"amount,omitempty"  validate:"number,gte=0"`
 }
 
 // ValidateLogin returns request body or error
