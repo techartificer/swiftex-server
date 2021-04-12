@@ -75,6 +75,13 @@ func deliverParcel(ctx echo.Context) error {
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
+		if err.Error() == string(codes.OrderNotAcceptedYet) {
+			resp.Title = "Order not accepted yet"
+			resp.Status = http.StatusUnprocessableEntity
+			resp.Code = codes.OrderNotAcceptedYet
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 		resp.Title = "Something went wrong"
 		resp.Status = http.StatusInternalServerError
 		resp.Code = codes.DatabaseQueryFailed
@@ -303,11 +310,13 @@ func cancelOrder(ctx echo.Context) error {
 	resp := response.Response{}
 	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
 
+	cancelled := constants.Cancelled
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 	order := &models.Order{
-		IsCancelled: true,
-		UpdatedAt:   time.Now().UTC(),
+		CurrentStatus: &cancelled,
+		IsCancelled:   true,
+		UpdatedAt:     time.Now().UTC(),
 	}
 	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
 	if err != nil {

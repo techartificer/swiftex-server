@@ -36,6 +36,9 @@ func initRiderIndex(db *mongo.Database) error {
 	if err := createIndex(riderCol, bson.M{"phone": 1}, true); err != nil {
 		return err
 	}
+	if err := createIndex(riderCol, bson.M{"NID": 1}, true); err != nil {
+		return err
+	}
 	if err := createIndex(riderCol, bson.M{"hub": 1}, false); err != nil {
 		return err
 	}

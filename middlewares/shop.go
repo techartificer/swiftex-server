@@ -118,3 +118,41 @@ func IsShopOwner() echo.MiddlewareFunc {
 		}
 	}
 }
+
+// IsShopOwnerStrict only for shop owner
+func IsShopOwnerStrict() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			resp := response.Response{}
+			shopID := ctx.Param("shopId")
+			db := database.GetDB()
+			shopRepo := data.NewShopRepo()
+			shop, err := shopRepo.ShopByID(db, shopID)
+			if err != nil {
+				logger.Log.Errorln(err)
+				if err == mongo.ErrNoDocuments {
+					resp.Title = "Shop not found"
+					resp.Status = http.StatusNotFound
+					resp.Code = codes.ShopNotFound
+					resp.Errors = errors.NewError(err.Error())
+					return resp.Send(ctx)
+				}
+				resp.Title = "Something went wrong"
+				resp.Status = http.StatusInternalServerError
+				resp.Code = codes.DatabaseQueryFailed
+				resp.Errors = err
+				return resp.Send(ctx)
+			}
+			userID := ctx.Get(constants.UserID).(primitive.ObjectID)
+			if shop.Owner != userID {
+				resp.Title = "You don not have access"
+				resp.Status = http.StatusForbidden
+				resp.Code = codes.AccessDenied
+				resp.Errors = err
+				return resp.Send(ctx)
+			}
+			ctx.Set("shop", shop)
+			return next(ctx)
+		}
+	}
+}

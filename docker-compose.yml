@@ -1,0 +1,10 @@
+version: '3.3'
+
+services:
+    web:
+        image: swiftex
+        container_name: swiftex
+        restart: unless-stopped
+        ports:
+            - 4141:4141
+        command: ["swiftex"]

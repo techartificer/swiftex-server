@@ -52,7 +52,7 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 	}
 	totalChan := make(chan int64)
 	defer close(totalChan)
-	errChan := make(chan error, 5)
+	errChan := make(chan error, 10)
 	go func() {
 		cnt, err1 := orderCollection.CountDocuments(context.Background(), query)
 		errChan <- err1
@@ -85,11 +85,41 @@ func (o *orderRepositoryImpl) Dashboard(db *mongo.Database, shopID string, start
 		errChan <- err1
 		returnedChan <- cnt
 	}()
+	cancelledChan := make(chan int64)
+	defer close(cancelledChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["isCancelled"] = true
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		cancelledChan <- cnt
+	}()
+	declainedChan := make(chan int64)
+	defer close(declainedChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["currentStatus"] = constants.Declined
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		declainedChan <- cnt
+	}()
+	createdChan := make(chan int64)
+	defer close(createdChan)
+	go func() {
+		query2 := helper.CopyMap(query)
+		query2["currentStatus"] = constants.Created
+		cnt, err1 := orderCollection.CountDocuments(context.Background(), query2)
+		errChan <- err1
+		createdChan <- cnt
+	}()
 	data := make(map[string]int64)
 	data["total"] = <-totalChan
 	data["delivered"] = <-deliveredChan
 	data["returned"] = <-returnedChan
 	data["inTransit"] = <-transitChan
+	data["cancelled"] = <-cancelledChan
+	data["declined"] = <-declainedChan
+	data["pending"] = <-createdChan
 	close(errChan)
 	for cerr := range errChan {
 		if cerr != nil {

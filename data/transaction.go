@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/lib/errors"
+	"github.com/techartificer/swiftex/lib/password"
+	"github.com/techartificer/swiftex/lib/random"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,6 +24,8 @@ import (
 type TransactionRepository interface {
 	TransactionByShopId(db *mongo.Database, shopID string) (*map[string]interface{}, error)
 	AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error)
+	GenerateTrxCode(db *mongo.Database, amount int64, shopID string) (*string, error)
+	CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error)
 }
 
 type transactionRepoImpl struct{}
@@ -40,6 +45,34 @@ func NewTransactionRepo() TransactionRepository {
 		transactionRepo = &transactionRepoImpl{}
 	})
 	return transactionRepo
+}
+
+func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error) {
+	query := make(bson.M)
+	query["amount"] = bson.M{"$gt": 0}
+	if lastID != "" {
+		_lastID, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			return nil, err
+		}
+		query["_id"] = bson.M{"$lt": _lastID}
+	}
+	matchStage := bson.D{{"$match", query}}
+	limitStage := bson.D{{"$limit", 10}}
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", "shops"}, {"localField", "shopId"}, {"foreignField", "_id"}, {"as", "shop"}}}}
+	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$shop"}, {"preserveNullAndEmptyArrays", false}}}}
+	sortStage := bson.D{{"$sort", bson.D{{"updatedAt", -1}}}}
+
+	trxCollection := db.Collection(models.Transaction{}.CollectionName())
+	cursor, err := trxCollection.Aggregate(context.Background(), mongo.Pipeline{matchStage, limitStage, lookupStage, unwindStage, sortStage})
+	if err != nil {
+		return nil, err
+	}
+	var transactions []bson.M
+	if err = cursor.All(context.Background(), &transactions); err != nil {
+		return nil, err
+	}
+	return &transactions, nil
 }
 
 func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error) {
@@ -65,6 +98,10 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		if order.DeliveredAt != nil {
 			return nil, errors.NewError(string(codes.OrderAlreadyDelevired))
 		}
+		if !order.IsAccepted {
+			return nil, errors.NewError(string(codes.OrderNotAcceptedYet))
+		}
+
 		t := time.Now().UTC() // time
 		OrderStatus := models.OrderStatus{
 			ID:            primitive.NewObjectID(),
@@ -157,7 +194,7 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 
 	go func() {
 		opts := options.Find().SetSort(bson.M{"_id": -1}).SetLimit(15)
-		cursor, err := trxHistoryCollection.Find(context.Background(), bson.M{}, opts)
+		cursor, err := trxHistoryCollection.Find(context.Background(), query, opts)
 		errChan <- err
 		var result []models.TrxHistory
 		err1 := cursor.All(context.Background(), &result)
@@ -176,4 +213,63 @@ func (t *transactionRepoImpl) TransactionByShopId(db *mongo.Database, shopID str
 		}
 	}
 	return &result, nil
+}
+
+func (t *transactionRepoImpl) GenerateTrxCode(db *mongo.Database, amount int64, shopID string) (*string, error) {
+	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	if err != nil {
+		return nil, err
+	}
+
+	trx := &models.Transaction{}
+	trxCollection := db.Collection(trx.CollectionName())
+
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+	session, err := db.Client().StartSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.EndSession(context.Background())
+	query := bson.M{"shopId": _shopID}
+
+	callBack := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		after := options.After
+		opt := options.FindOneAndUpdateOptions{
+			ReturnDocument: &after,
+		}
+		if err1 := trxCollection.FindOne(sessionCtx, query).Decode(trx); err1 != nil {
+			return nil, err1
+		}
+		if trx.Balance < float64(amount) {
+			return nil, errors.NewError(string(codes.InsufficientBalance))
+		}
+		expiresAt := time.Now().Local().Add(time.Hour * time.Duration(24*3)).Unix()
+		trxCode, err1 := random.GenerateRandomCode(6)
+		if err1 != nil {
+			log.Println(err1)
+			return nil, err1
+		}
+		hashTrxCode, err := password.HashPassword(trxCode)
+		if err != nil {
+			return nil, err
+		}
+		update := bson.M{"$set": bson.M{
+			"trxCode":          hashTrxCode,
+			"trxCodeExpiresAt": expiresAt,
+			"amount":           amount,
+			"updatedAt":        time.Now().UTC(),
+		}}
+		if err1 := trxCollection.FindOneAndUpdate(sessionCtx, query, update, &opt).Decode(trx); err != nil {
+			return nil, err1
+		}
+		return trxCode, nil
+	}
+	result, err := session.WithTransaction(context.Background(), callBack, txnOpts)
+	if err != nil {
+		return nil, err
+	}
+	code := result.(string)
+	return &code, err
 }
