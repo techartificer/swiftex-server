@@ -17,11 +17,25 @@ import (
 func RegisterTransactionRoutes(endpoint *echo.Group) {
 	endpoint.GET("/shopId/:shopId/", transactionByShopId, middlewares.JWTAuth(false), middlewares.IsShopOwner())
 	endpoint.PATCH("/generate-trx-code/:shopId/", generateTrxCode, middlewares.JWTAuth(false), middlewares.IsShopOwnerStrict())
+	endpoint.GET("/cash-out-requests/", cashOutRequests, middlewares.JWTAuth(true))
 }
 
 func cashOutRequests(ctx echo.Context) error {
 	resp := response.Response{}
-
+	lastID := ctx.QueryParam("lastId")
+	db := database.GetDB()
+	trxRepo := data.NewTransactionRepo()
+	result, err := trxRepo.CashOutRequests(db, lastID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = result
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
 

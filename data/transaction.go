@@ -25,6 +25,7 @@ type TransactionRepository interface {
 	TransactionByShopId(db *mongo.Database, shopID string) (*map[string]interface{}, error)
 	AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error)
 	GenerateTrxCode(db *mongo.Database, amount int64, shopID string) (*string, error)
+	CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error)
 }
 
 type transactionRepoImpl struct{}
@@ -46,10 +47,32 @@ func NewTransactionRepo() TransactionRepository {
 	return transactionRepo
 }
 
-func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, name, contact string) (*[]models.Transaction, error) {
-	// query := make(bson.M)
-	// query["amount"]
-	return nil, nil
+func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error) {
+	query := make(bson.M)
+	query["amount"] = bson.M{"$gt": 0}
+	if lastID != "" {
+		_lastID, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			return nil, err
+		}
+		query["_id"] = bson.M{"$lt": _lastID}
+	}
+	matchStage := bson.D{{"$match", query}}
+	limitStage := bson.D{{"$limit", 10}}
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", "shops"}, {"localField", "shopId"}, {"foreignField", "_id"}, {"as", "shop"}}}}
+	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$shop"}, {"preserveNullAndEmptyArrays", false}}}}
+	sortStage := bson.D{{"$sort", bson.D{{"updatedAt", -1}}}}
+
+	trxCollection := db.Collection(models.Transaction{}.CollectionName())
+	cursor, err := trxCollection.Aggregate(context.Background(), mongo.Pipeline{matchStage, limitStage, lookupStage, unwindStage, sortStage})
+	if err != nil {
+		return nil, err
+	}
+	var transactions []bson.M
+	if err = cursor.All(context.Background(), &transactions); err != nil {
+		return nil, err
+	}
+	return &transactions, nil
 }
 
 func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error) {
@@ -222,7 +245,7 @@ func (t *transactionRepoImpl) GenerateTrxCode(db *mongo.Database, amount int64, 
 		if trx.Balance < float64(amount) {
 			return nil, errors.NewError(string(codes.InsufficientBalance))
 		}
-		expiresAt := time.Now().Add(time.Hour * 6).Unix()
+		expiresAt := time.Now().Local().Add(time.Hour * time.Duration(24*3)).Unix()
 		trxCode, err1 := random.GenerateRandomCode(6)
 		if err1 != nil {
 			log.Println(err1)
