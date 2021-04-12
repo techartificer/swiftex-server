@@ -39,7 +39,7 @@ func GenerateRandomCode(size int) (string, error) {
 	}
 	bytes := make([]byte, size)
 	for i := 0; i < size; i++ {
-		bytes[i] = numPool[rand.Intn(len(pool))]
+		bytes[i] = numPool[rand.Intn(len(numPool))]
 	}
 	return string(bytes), nil
 }

@@ -15,6 +15,7 @@ type Transaction struct {
 	Balance          float64            `bson:"balance,omitempty" json:"balance"`
 	TrxCode          string             `bson:"trxCode,omitempty" json:"-"`
 	TrxCodeExpiresAt int64              `bson:"trxCodeExpiresAt,omitempty" json:"-"`
+	Amount           int64              `bson:"amount,omitempty" json:"amount"`
 	CreatedAt        time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdatedAt        time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
