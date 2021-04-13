@@ -26,6 +26,7 @@ type TransactionRepository interface {
 	AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error)
 	GenerateTrxCode(db *mongo.Database, amount int64, shopID string) (*string, error)
 	CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error)
+	CashOut(db *mongo.Database, _createdBy primitive.ObjectID, trxID, trxCode string) (*models.Transaction, error)
 }
 
 type transactionRepoImpl struct{}
@@ -45,6 +46,81 @@ func NewTransactionRepo() TransactionRepository {
 		transactionRepo = &transactionRepoImpl{}
 	})
 	return transactionRepo
+}
+
+func (t *transactionRepoImpl) CashOut(db *mongo.Database, _createdBy primitive.ObjectID, trxID, trxCode string) (*models.Transaction, error) {
+	_trxID, err := primitive.ObjectIDFromHex(trxID)
+	if err != nil {
+		return nil, err
+	}
+
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+	session, err := db.Client().StartSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.EndSession(context.Background())
+
+	callBack := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		query := bson.M{"_id": _trxID}
+		trx := &models.Transaction{}
+		trxCollection := db.Collection(trx.CollectionName())
+		after := options.After
+		opt := options.FindOneAndUpdateOptions{
+			ReturnDocument: &after,
+		}
+		if err := trxCollection.FindOne(sessionCtx, query).Decode(&trx); err != nil {
+			return nil, err
+		}
+		cashOutAmount := trx.Amount
+
+		ok := password.CheckPasswordHash(trxCode, trx.TrxCode)
+		if !ok || cashOutAmount == 0 {
+			return nil, errors.NewError(string(codes.InvalidTrxCode))
+		}
+		if trx.TrxCodeExpiresAt < time.Now().Unix() {
+			return nil, errors.NewError(string(codes.TrxCodeExpired))
+		}
+		if trx.Balance < float64(cashOutAmount) {
+			return nil, errors.NewError(string(codes.InsufficientBalance))
+		}
+
+		filter := bson.M{"_id": _trxID}
+		update := bson.M{
+			"$inc": bson.M{"balance": (-1 * cashOutAmount)},
+			"$set": bson.M{
+				"amount":    0,
+				"updatedAt": time.Now().UTC(),
+			},
+		}
+		if err := trxCollection.FindOneAndUpdate(sessionCtx, filter, update, &opt).Decode(&trx); err != nil {
+			return nil, err
+		}
+		trxHistory := models.TrxHistory{
+			ID:          primitive.NewObjectID(),
+			PaymentType: models.OUT,
+			Payment:     float64(cashOutAmount),
+			TrxID:       _trxID,
+			OrderID:     nil,
+			ShopID:      trx.ShopID,
+			CreatedBy:   _createdBy,
+			CreatedAt:   time.Now().UTC(),
+		}
+		trxHistoryCollection := db.Collection(trxHistory.CollectionName())
+		if _, err1 := trxHistoryCollection.InsertOne(sessionCtx, trxHistory); err1 != nil {
+			return nil, err
+		}
+		return trx, nil
+	}
+	result, err := session.WithTransaction(context.Background(), callBack, txnOpts)
+	if err != nil {
+		return nil, err
+	}
+	trx := models.Transaction{}
+	mapstructure.Decode(result, &trx)
+	return &trx, nil
 }
 
 func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error) {
