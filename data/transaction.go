@@ -152,6 +152,8 @@ func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string)
 }
 
 func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error) {
+	// TODO: have to add charge update [admin can change charge]
+
 	wc := writeconcern.New(writeconcern.WMajority())
 	rc := readconcern.Snapshot()
 	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)

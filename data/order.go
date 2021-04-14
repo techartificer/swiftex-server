@@ -197,6 +197,8 @@ func (o *orderRepositoryImpl) UpdateOrder(db *mongo.Database, order *models.Orde
 }
 
 func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error) {
+	// TODO: have to add charge update [admin can change charge]
+
 	updatedOrder := &models.Order{}
 	orderCollection := db.Collection(updatedOrder.CollectionName())
 	_id, err := primitive.ObjectIDFromHex(ID)
@@ -211,12 +213,27 @@ func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *mo
 	query := make(bson.M)
 	if orderStatus.Status == constants.Accepted {
 		query["isAccepted"] = true
+		orderStatus.Text = constants.AcceptedMsg
+	}
+	if orderStatus.Status == constants.Picked {
+		query["isPicked"] = true
+		orderStatus.Text = constants.PickedMsg
 	}
 	if orderStatus.Status == constants.Declined {
 		query["isCancelled"] = true
+		if orderStatus.Text != "" {
+			orderStatus.Text = constants.CancelledMsg
+		}
 	}
-	if orderStatus.Status == constants.Delivered {
-		query["deliveredAt"] = time.Now().UTC()
+	if orderStatus.Status == constants.Returned {
+		if orderStatus.Text != "" {
+			orderStatus.Text = constants.ReturnedMsg
+		}
+	}
+	if orderStatus.Status == constants.RescheduleMsg {
+		if orderStatus.Text != "" {
+			orderStatus.Text = constants.RescheduleMsg
+		}
 	}
 	query["currentStatus"] = orderStatus.Status
 	orderStatusArray := []models.OrderStatus{*orderStatus}

@@ -67,6 +67,7 @@ const (
 
 const (
 	CreatedMsg    string = "Your parcel has been placed"
+	AcceptedMsg   string = "Parcel has been accepted"
 	PickedMsg     string = "Parcel has been picked up"
 	InTransitMsg  string = "Out for delivery"
 	CancelledMsg  string = "Parcel has been cancelled"
