@@ -273,7 +273,7 @@ func trackOrder(ctx echo.Context) error {
 func updateOrder(ctx echo.Context) error {
 	resp := response.Response{}
 	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
-	order, err := validators.UpdateOrder(ctx)
+	body, err := validators.UpdateOrder(ctx)
 	if err != nil {
 		logger.Log.Errorln(err)
 		resp.Title = "Invalid order update request data"
@@ -285,7 +285,30 @@ func updateOrder(ctx echo.Context) error {
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 
-	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
+	order, err := orderRepo.OrderByID(db, orderID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	if order.DeliveredAt != nil || order.IsPicked || order.IsCancelled {
+		resp.Title = "You can not update parcel"
+		resp.Status = http.StatusLocked
+		resp.Code = codes.OrderNotUpdateAble
+		resp.Errors = errors.NewError("Parcel status is not allowing to update")
+		return resp.Send(ctx)
+	}
+	updatedOrder, err := orderRepo.UpdateOrder(db, body, orderID, shopID)
 	if err != nil {
 		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {

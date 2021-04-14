@@ -181,7 +181,7 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		t := time.Now().UTC() // time
 		OrderStatus := models.OrderStatus{
 			ID:            primitive.NewObjectID(),
-			Text:          "Order succefully delevered at your door",
+			Text:          constants.DeleveredMsg,
 			Status:        constants.Delivered,
 			DeleveryBoyID: &trxHistory.CreatedBy,
 			AdminID:       &trxHistory.CreatedBy,

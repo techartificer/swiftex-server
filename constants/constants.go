@@ -42,6 +42,7 @@ const (
 	Declined  string = "Declined"
 	InTransit string = "In Transit"
 	Returned  string = "Returned"
+	Picked    string = "Picked"
 )
 
 var AllStatus = []string{Active, Deactive}
@@ -62,4 +63,14 @@ const TrackIDSize = 8
 const (
 	Express string = "Express"
 	Regular string = "Regular"
+)
+
+const (
+	CreatedMsg    string = "Your parcel has been placed"
+	PickedMsg     string = "Parcel has been picked up"
+	InTransitMsg  string = "Out for delivery"
+	CancelledMsg  string = "Parcel has been cancelled"
+	ReturnedMsg   string = "Parcel has been returned"
+	RescheduleMsg string = "Parcel has been rescheduled"
+	DeleveredMsg  string = "Successfully delevered at your door"
 )
