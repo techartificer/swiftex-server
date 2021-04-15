@@ -13,6 +13,7 @@ import (
 	"github.com/techartificer/swiftex/lib/password"
 	"github.com/techartificer/swiftex/lib/random"
 	"github.com/techartificer/swiftex/models"
+	"github.com/techartificer/swiftex/serializer"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,7 +26,7 @@ type TransactionRepository interface {
 	TransactionByShopId(db *mongo.Database, shopID string) (*map[string]interface{}, error)
 	AddTrxHistory(db *mongo.Database, trxHistory *models.TrxHistory) (*map[string]interface{}, error)
 	GenerateTrxCode(db *mongo.Database, amount int64, shopID string) (*string, error)
-	CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error)
+	CashOutRequests(db *mongo.Database, lastID string) (*[]serializer.CashOutRequests, error)
 	CashOut(db *mongo.Database, _createdBy primitive.ObjectID, trxID, trxCode string) (*models.Transaction, error)
 }
 
@@ -123,7 +124,7 @@ func (t *transactionRepoImpl) CashOut(db *mongo.Database, _createdBy primitive.O
 	return &trx, nil
 }
 
-func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string) (*[]bson.M, error) {
+func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string) (*[]serializer.CashOutRequests, error) {
 	query := make(bson.M)
 	query["amount"] = bson.M{"$gt": 0}
 	if lastID != "" {
@@ -144,7 +145,7 @@ func (t *transactionRepoImpl) CashOutRequests(db *mongo.Database, lastID string)
 	if err != nil {
 		return nil, err
 	}
-	var transactions []bson.M
+	var transactions []serializer.CashOutRequests
 	if err = cursor.All(context.Background(), &transactions); err != nil {
 		return nil, err
 	}
