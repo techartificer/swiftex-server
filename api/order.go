@@ -173,8 +173,11 @@ func assignRider(ctx echo.Context) error {
 func ordersAdmin(ctx echo.Context) error {
 	resp := response.Response{}
 	lastID, startDate, endDate, shopID := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate"), ctx.QueryParam("shopId")
-	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	trackID, phone, deliveryZone := ctx.QueryParam("trackId"), ctx.QueryParam("phone"), ctx.QueryParam("deliveryZone")
 	query := make(bson.M)
+	if deliveryZone != "" {
+		query["recipientArea"] = primitive.Regex{Pattern: deliveryZone, Options: "i"}
+	}
 	if shopID != "" {
 		_shopID, err := primitive.ObjectIDFromHex(shopID)
 		if err != nil {
@@ -458,7 +461,7 @@ func orders(ctx echo.Context) error {
 	resp := response.Response{}
 	shopID := ctx.Param("shopId")
 	lastID, startDate, endDate := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate")
-	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	trackID, phone, deliveryZone := ctx.QueryParam("trackId"), ctx.QueryParam("phone"), ctx.QueryParam("deliveryZone")
 
 	_shopID, err := primitive.ObjectIDFromHex(shopID)
 	if err != nil {
@@ -488,6 +491,9 @@ func orders(ctx echo.Context) error {
 	}
 	if trackID != "" {
 		query["trackId"] = primitive.Regex{Pattern: trackID, Options: ""}
+	}
+	if deliveryZone != "" {
+		query["recipientArea"] = primitive.Regex{Pattern: deliveryZone, Options: ""}
 	}
 	if startDate != "" && endDate != "" {
 		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
