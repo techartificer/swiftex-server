@@ -14,6 +14,7 @@ const (
 	InvalidTransactionData       ErrorCode = "400008"
 	InvalidGenTrxCode            ErrorCode = "400009"
 	InvalidCashOutData           ErrorCode = "400010"
+	InvalidForgotPassData        ErrorCode = "400011"
 	InvalidLoginCredential       ErrorCode = "401001"
 	BearerTokenGiven             ErrorCode = "401002"
 	InvalidAuthorizationToken    ErrorCode = "401003"

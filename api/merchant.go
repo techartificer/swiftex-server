@@ -13,6 +13,7 @@ import (
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/middlewares"
+	"github.com/techartificer/swiftex/models"
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -21,6 +22,7 @@ func RegisterMerchantRoutes(endpoint *echo.Group) {
 	endpoint.POST("/register/", register)
 	endpoint.GET("/is-available/:phone/", isUsernameAvilable)
 	endpoint.GET("/", allMerchants, middlewares.JWTAuth(true))
+	endpoint.PATCH("/forgot-password/", forgotPassword)
 }
 
 func isUsernameAvilable(ctx echo.Context) error {
@@ -118,6 +120,60 @@ func allMerchants(ctx echo.Context) error {
 		return resp.Send(ctx)
 	}
 	resp.Data = merchants
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func forgotPassword(ctx echo.Context) error {
+	resp := response.Response{}
+	body, err := validators.ValidateForgotPassword(ctx)
+
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidForgotPassData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	if err := firebase.ValidateToken(body.Token, body.Phone); err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Phone number is not verified"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.PhoneNumberNotVerified
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	hash, err := password.HashPassword(body.Password)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Password hash failed"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.PasswordHashFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	merchantRepo := data.NewMerchantRepo()
+	db := database.GetDB()
+	merchant, err := merchantRepo.UpdateByPhone(db, body.Phone, &models.Merchant{Password: hash})
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "You are not registered"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.AdminNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = merchant
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
