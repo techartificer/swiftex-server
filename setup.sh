@@ -15,6 +15,7 @@ docker build -t swiftex .
 docker-compose down
 docker-compose up -d
 
+sleep 15
 echo "Health check"
 echo ""
 curl -s localhost:4141 | json_pp
