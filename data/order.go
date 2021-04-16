@@ -6,7 +6,6 @@ import (
 
 	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/lib/helper"
-	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -136,7 +135,6 @@ func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) er
 }
 
 func (o *orderRepositoryImpl) TrackOrder(db *mongo.Database, trackID string) (*models.Order, error) {
-	logger.Log.Println("trackId: ", trackID)
 	order := &models.Order{}
 	orderCollection := db.Collection(order.CollectionName())
 	filter := bson.M{"trackId": trackID}

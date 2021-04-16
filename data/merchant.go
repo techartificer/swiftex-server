@@ -77,6 +77,7 @@ func (m *merchantRepoImpl) UpdateByPhone(db *mongo.Database, phone string, merch
 	}
 
 	updatedMerchant := &models.Merchant{}
-	err := merchantCollection.FindOneAndUpdate(context.Background(), filter, merchant, &opt).Decode(updatedMerchant)
+	update := bson.M{"$set": merchant}
+	err := merchantCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(updatedMerchant)
 	return merchant, err
 }
