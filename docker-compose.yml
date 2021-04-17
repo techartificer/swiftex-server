@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
     web:
-        image: swiftex
+        image: swiftex:1.0
         container_name: swiftex
         restart: unless-stopped
         ports:
