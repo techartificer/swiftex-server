@@ -6,3 +6,4 @@ swiftex
 swiftex-firebase.json
 *.out
 wget-log
+vendor
