@@ -30,19 +30,20 @@ var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}
 
 const (
 	// Active status: user can access
-	Active    string = "Active"
-	Cancelled string = "Cancelled"
-	Deactive  string = "Deactive"
-	Created   string = "Created"
-	Delivered string = "Delivered"
-	Accepted  string = "Accepted"
-	Assigned  string = "Assigned"
-	Apporved  string = "Approved"
-	Pending   string = "Pending"
-	Declined  string = "Declined"
-	InTransit string = "In Transit"
-	Returned  string = "Returned"
-	Picked    string = "Picked"
+	Active      string = "Active"
+	Cancelled   string = "Cancelled"
+	Deactive    string = "Deactive"
+	Created     string = "Created"
+	Delivered   string = "Delivered"
+	Accepted    string = "Accepted"
+	Assigned    string = "Assigned"
+	Apporved    string = "Approved"
+	Pending     string = "Pending"
+	Declined    string = "Declined"
+	InTransit   string = "In Transit"
+	Returned    string = "Returned"
+	Rescheduled string = "Rescheduled"
+	Picked      string = "Picked"
 )
 
 var AllStatus = []string{Active, Deactive}

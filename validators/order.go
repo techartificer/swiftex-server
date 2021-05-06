@@ -225,16 +225,7 @@ func OrderChangeStatus(ctx echo.Context) (*OrderChangeReq, error) {
 		return nil, err
 	}
 	userID := ctx.Get(constants.UserID).(primitive.ObjectID)
-	role := ctx.Get(constants.Role).(string)
-
-	switch constants.AdminRole(role) {
-	case constants.SuperAdmin:
-		body.AdminID = &userID
-	case constants.Admin:
-		body.AdminID = &userID
-	case constants.Moderator:
-		body.MerchantID = &userID
-	}
+	body.AdminID = &userID
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}

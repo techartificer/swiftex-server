@@ -24,6 +24,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type orderError struct {
+	Error   string             `json:"error"`
+	OrderID primitive.ObjectID `json:"orderId"`
+}
+
 func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/", ordersAdmin, middlewares.JWTAuth(true))
 	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
@@ -590,11 +595,6 @@ func orderCreate(ctx echo.Context) error {
 	return resp.Send(ctx)
 }
 
-type orderError struct {
-	Error   string             `json:"error"`
-	OrderID primitive.ObjectID `json:"orderId"`
-}
-
 func changeStatus(ctx echo.Context) error {
 	resp := response.Response{}
 	body, err := validators.OrderChangeStatus(ctx)
@@ -635,14 +635,12 @@ func changeStatus(ctx echo.Context) error {
 				return
 			}
 			orderStatus := models.OrderStatus{
-				ID:              primitive.NewObjectID(),
-				Text:            body.Text,
-				DeleveryBoyID:   body.DeleveryBoyID,
-				AdminID:         body.AdminID,
-				MerchantID:      body.MerchantID,
-				ShopModeratorID: body.ShopModeratorID,
-				Status:          body.Status,
-				Time:            time.Now().UTC(),
+				ID:            primitive.NewObjectID(),
+				Text:          body.Text,
+				DeleveryBoyID: body.DeleveryBoyID,
+				AdminID:       body.AdminID,
+				Status:        body.Status,
+				Time:          time.Now().UTC(),
 			}
 			order, err = orderRepo.AddOrderStatus(db, &orderStatus, oid.Hex())
 			if err != nil {

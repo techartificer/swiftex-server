@@ -219,20 +219,17 @@ func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *mo
 	}
 	if orderStatus.Status == constants.Declined {
 		query["isCancelled"] = true
-		if orderStatus.Text != "" {
+		if orderStatus.Text == "" {
 			orderStatus.Text = constants.CancelledMsg
 		}
 	}
-	if orderStatus.Status == constants.Returned {
-		if orderStatus.Text != "" {
-			orderStatus.Text = constants.ReturnedMsg
-		}
+	if orderStatus.Status == constants.Returned && orderStatus.Text == "" {
+		orderStatus.Text = constants.ReturnedMsg
 	}
-	if orderStatus.Status == constants.RescheduleMsg {
-		if orderStatus.Text != "" {
-			orderStatus.Text = constants.RescheduleMsg
-		}
+	if orderStatus.Status == constants.Rescheduled && orderStatus.Text == "" {
+		orderStatus.Text = constants.RescheduleMsg
 	}
+
 	query["currentStatus"] = orderStatus.Status
 	orderStatusArray := []models.OrderStatus{*orderStatus}
 	push := bson.M{"status": bson.M{"$each": orderStatusArray, "$position": 0}}
