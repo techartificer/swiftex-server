@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -23,6 +24,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type orderError struct {
+	Error   string             `json:"error"`
+	OrderID primitive.ObjectID `json:"orderId"`
+}
+
 func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/", ordersAdmin, middlewares.JWTAuth(true))
 	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
@@ -35,6 +41,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.POST("/assign-rider/", assignRider, middlewares.JWTAuth(true))
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 	endpoint.POST("/deliver/:orderId/", deliverParcel, middlewares.RiderJWTAuth())
+	endpoint.PATCH("/change/status/", changeStatus, middlewares.JWTAuth(true))
 }
 
 func deliverParcel(ctx echo.Context) error {
@@ -173,8 +180,11 @@ func assignRider(ctx echo.Context) error {
 func ordersAdmin(ctx echo.Context) error {
 	resp := response.Response{}
 	lastID, startDate, endDate, shopID := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate"), ctx.QueryParam("shopId")
-	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	trackID, phone, deliveryZone := ctx.QueryParam("trackId"), ctx.QueryParam("phone"), ctx.QueryParam("deliveryZone")
 	query := make(bson.M)
+	if deliveryZone != "" {
+		query["recipientArea"] = primitive.Regex{Pattern: deliveryZone, Options: "i"}
+	}
 	if shopID != "" {
 		_shopID, err := primitive.ObjectIDFromHex(shopID)
 		if err != nil {
@@ -273,7 +283,7 @@ func trackOrder(ctx echo.Context) error {
 func updateOrder(ctx echo.Context) error {
 	resp := response.Response{}
 	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
-	order, err := validators.UpdateOrder(ctx)
+	body, err := validators.UpdateOrder(ctx)
 	if err != nil {
 		logger.Log.Errorln(err)
 		resp.Title = "Invalid order update request data"
@@ -285,7 +295,30 @@ func updateOrder(ctx echo.Context) error {
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
 
-	updatedOrder, err := orderRepo.UpdateOrder(db, order, orderID, shopID)
+	order, err := orderRepo.OrderByID(db, orderID)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Order not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.OrderNotFound
+			resp.Errors = errors.NewError(err.Error())
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	if order.DeliveredAt != nil || order.IsPicked || order.IsCancelled {
+		resp.Title = "You can not update parcel"
+		resp.Status = http.StatusLocked
+		resp.Code = codes.OrderNotUpdateAble
+		resp.Errors = errors.NewError("Parcel status is not allowing to update")
+		return resp.Send(ctx)
+	}
+	updatedOrder, err := orderRepo.UpdateOrder(db, body, orderID, shopID)
 	if err != nil {
 		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
@@ -435,7 +468,7 @@ func orders(ctx echo.Context) error {
 	resp := response.Response{}
 	shopID := ctx.Param("shopId")
 	lastID, startDate, endDate := ctx.QueryParam("lastId"), ctx.QueryParam("startDate"), ctx.QueryParam("endDate")
-	trackID, phone := ctx.QueryParam("trackId"), ctx.QueryParam("phone")
+	trackID, phone, deliveryZone := ctx.QueryParam("trackId"), ctx.QueryParam("phone"), ctx.QueryParam("deliveryZone")
 
 	_shopID, err := primitive.ObjectIDFromHex(shopID)
 	if err != nil {
@@ -465,6 +498,9 @@ func orders(ctx echo.Context) error {
 	}
 	if trackID != "" {
 		query["trackId"] = primitive.Regex{Pattern: trackID, Options: ""}
+	}
+	if deliveryZone != "" {
+		query["recipientArea"] = primitive.Regex{Pattern: deliveryZone, Options: ""}
 	}
 	if startDate != "" && endDate != "" {
 		std, err := strconv.ParseInt(startDate, 10, 64) // startDate
@@ -556,5 +592,88 @@ func orderCreate(ctx echo.Context) error {
 	}
 	resp.Data = order
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+func changeStatus(ctx echo.Context) error {
+	resp := response.Response{}
+	body, err := validators.OrderChangeStatus(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid order update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderStatusUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	if body.Status == constants.Delivered {
+		resp.Title = "Invalid order status change request"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderStatusUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	var wg sync.WaitGroup
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	errChan := make(chan orderError, len(body.OrderIDs))
+	ordersChan := make(chan models.Order, len(body.OrderIDs))
+
+	for _, orderId := range body.OrderIDs {
+		wg.Add(1)
+		go func(w *sync.WaitGroup, oid primitive.ObjectID) {
+			defer w.Done()
+			order, err := orderRepo.OrderByID(db, oid.Hex())
+			if err != nil {
+				errChan <- orderError{err.Error(), oid}
+				return
+			}
+			if order.DeliveredAt != nil {
+				errChan <- orderError{"Order already delivered", oid}
+				return
+			}
+			orderStatus := models.OrderStatus{
+				ID:            primitive.NewObjectID(),
+				Text:          body.Text,
+				DeleveryBoyID: body.DeleveryBoyID,
+				AdminID:       body.AdminID,
+				Status:        body.Status,
+				Time:          time.Now().UTC(),
+			}
+			order, err = orderRepo.AddOrderStatus(db, &orderStatus, oid.Hex())
+			if err != nil {
+				errChan <- orderError{err.Error(), oid}
+			} else {
+				ordersChan <- *order
+			}
+		}(&wg, orderId)
+	}
+	wg.Wait()
+	close(errChan)
+	close(ordersChan)
+
+	hasError := false
+	var errs []orderError
+	for err := range errChan {
+		hasError = true
+		logger.Log.Errorln(err)
+		errs = append(errs, err)
+	}
+	if hasError {
+		resp.Errors = errors.NewError("Update status not successfull")
+		resp.Data = errs
+		resp.Status = http.StatusInternalServerError
+		resp.Title = "Status update unsuccessful"
+		resp.Code = codes.DatabaseQueryFailed
+		return resp.Send(ctx)
+	}
+	var orders []models.Order
+	for order := range ordersChan {
+		orders = append(orders, order)
+	}
+	resp.Data = orders
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

@@ -1,14 +1,21 @@
-package models
+package serializer
 
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Transaction struct {
+type shop struct {
+	Name    string `bson:"name,omitempty" json:"name"`
+	ShopID  string `bson:"shopId,omitempty" json:"shopId"`
+	Phone   string `bson:"phone,omitempty" json:"phone"`
+	Email   string `bson:"email,omitempty" json:"email"`
+	Address string `bson:"address,omitempty" json:"address"`
+}
+
+type CashOutRequests struct {
+	Shop             shop               `bson:"shop,omitempty" json:"shop"`
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	ShopID           primitive.ObjectID `bson:"shopId,omitempty" json:"shopId"`
 	Owner            primitive.ObjectID `bson:"owner,omitempty" json:"owner"`
@@ -18,18 +25,4 @@ type Transaction struct {
 	Amount           int64              `bson:"amount,omitempty" json:"amount"`
 	CreatedAt        time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdatedAt        time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
-}
-
-// CollectionName returns name of the models
-func (t Transaction) CollectionName() string {
-	return "transactions"
-}
-
-func initTransactionIndex(db *mongo.Database) error {
-	trx := Transaction{}
-	trxCol := db.Collection(trx.CollectionName())
-	if err := createIndex(trxCol, bson.M{"shopId": 1}, true); err != nil {
-		return err
-	}
-	return nil
 }

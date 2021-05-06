@@ -1,5 +1,9 @@
 config.yml
+config.prod.yml
+config.stage.yml
 __debug_bin
 swiftex
 swiftex-firebase.json
 *.out
+wget-log
+vendor

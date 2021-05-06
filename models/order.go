@@ -48,8 +48,10 @@ type Order struct {
 	DeliveryType          string              `bson:"deliveryType,omitempty" json:"deliveryType"`
 	Status                []OrderStatus       `bson:"status,omitempty" json:"status"`
 	CurrentStatus         *string             `bson:"currentStatus,omitempty" json:"currentStatus"`
+	Weight                float32             `bson:"weight,omitempty" json:"weight"`
 	IsCancelled           bool                `bson:"isCancelled,omitempty" json:"isCancelled"`
 	IsAccepted            bool                `bson:"isAccepted,omitempty" json:"isAccepted"`
+	IsPicked              bool                `bson:"isPicked,omitempty" json:"isPicked"`
 	DeliveredAt           *time.Time          `bson:"deliveredAt,omitempty" json:"deliveredAt,omitempty"`
 	CreatedAt             time.Time           `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdateBy              *primitive.ObjectID `bson:"updatedBy,omitempty" json:"-"`

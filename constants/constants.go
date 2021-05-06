@@ -30,18 +30,20 @@ var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}
 
 const (
 	// Active status: user can access
-	Active    string = "Active"
-	Cancelled string = "Cancelled"
-	Deactive  string = "Deactive"
-	Created   string = "Created"
-	Delivered string = "Delivered"
-	Accepted  string = "Accepted"
-	Assigned  string = "Assigned"
-	Apporved  string = "Approved"
-	Pending   string = "Pending"
-	Declined  string = "Declined"
-	InTransit string = "In Transit"
-	Returned  string = "Returned"
+	Active      string = "Active"
+	Cancelled   string = "Cancelled"
+	Deactive    string = "Deactive"
+	Created     string = "Created"
+	Delivered   string = "Delivered"
+	Accepted    string = "Accepted"
+	Assigned    string = "Assigned"
+	Apporved    string = "Approved"
+	Pending     string = "Pending"
+	Declined    string = "Declined"
+	InTransit   string = "In Transit"
+	Returned    string = "Returned"
+	Rescheduled string = "Rescheduled"
+	Picked      string = "Picked"
 )
 
 var AllStatus = []string{Active, Deactive}
@@ -62,4 +64,15 @@ const TrackIDSize = 8
 const (
 	Express string = "Express"
 	Regular string = "Regular"
+)
+
+const (
+	CreatedMsg    string = "Your parcel has been placed"
+	AcceptedMsg   string = "Parcel has been accepted"
+	PickedMsg     string = "Parcel has been picked up"
+	InTransitMsg  string = "Out for delivery"
+	CancelledMsg  string = "Parcel has been cancelled"
+	ReturnedMsg   string = "Parcel has been returned"
+	RescheduleMsg string = "Parcel has been rescheduled"
+	DeleveredMsg  string = "Successfully delevered at your door"
 )

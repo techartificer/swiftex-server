@@ -28,6 +28,7 @@ func RegisterShopRoutes(endpoint *echo.Group) {
 	endpoint.PATCH("/id/:shopId/", updateShop, middlewares.JWTAuth(false), middlewares.IsShopOwner())
 	endpoint.GET("/search/", searchShop, middlewares.JWTAuth(true))
 	endpoint.GET("/dashboard/:shopId/", dashboard, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.GET("/all-shops-name/", allShopsName, middlewares.JWTAuth(true))
 }
 
 func dashboard(ctx echo.Context) error {
@@ -71,6 +72,24 @@ func dashboard(ctx echo.Context) error {
 		return resp.Send(ctx)
 	}
 	resp.Data = dashboard
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func allShopsName(ctx echo.Context) error {
+	resp := response.Response{}
+	shopRepo := data.NewShopRepo()
+	db := database.GetDB()
+	shops, err := shopRepo.AllShopsName(db)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	resp.Data = shops
 	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }

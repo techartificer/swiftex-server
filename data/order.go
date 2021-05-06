@@ -6,7 +6,6 @@ import (
 
 	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/lib/helper"
-	"github.com/techartificer/swiftex/logger"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -136,7 +135,6 @@ func (o *orderRepositoryImpl) Create(db *mongo.Database, order *models.Order) er
 }
 
 func (o *orderRepositoryImpl) TrackOrder(db *mongo.Database, trackID string) (*models.Order, error) {
-	logger.Log.Println("trackId: ", trackID)
 	order := &models.Order{}
 	orderCollection := db.Collection(order.CollectionName())
 	filter := bson.M{"trackId": trackID}
@@ -197,6 +195,8 @@ func (o *orderRepositoryImpl) UpdateOrder(db *mongo.Database, order *models.Orde
 }
 
 func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *models.OrderStatus, ID string) (*models.Order, error) {
+	// TODO: have to add charge update [admin can change charge]
+
 	updatedOrder := &models.Order{}
 	orderCollection := db.Collection(updatedOrder.CollectionName())
 	_id, err := primitive.ObjectIDFromHex(ID)
@@ -211,13 +211,25 @@ func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *mo
 	query := make(bson.M)
 	if orderStatus.Status == constants.Accepted {
 		query["isAccepted"] = true
+		orderStatus.Text = constants.AcceptedMsg
+	}
+	if orderStatus.Status == constants.Picked {
+		query["isPicked"] = true
+		orderStatus.Text = constants.PickedMsg
 	}
 	if orderStatus.Status == constants.Declined {
 		query["isCancelled"] = true
+		if orderStatus.Text == "" {
+			orderStatus.Text = constants.CancelledMsg
+		}
 	}
-	if orderStatus.Status == constants.Delivered {
-		query["deliveredAt"] = time.Now().UTC()
+	if orderStatus.Status == constants.Returned && orderStatus.Text == "" {
+		orderStatus.Text = constants.ReturnedMsg
 	}
+	if orderStatus.Status == constants.Rescheduled && orderStatus.Text == "" {
+		orderStatus.Text = constants.RescheduleMsg
+	}
+
 	query["currentStatus"] = orderStatus.Status
 	orderStatusArray := []models.OrderStatus{*orderStatus}
 	push := bson.M{"status": bson.M{"$each": orderStatusArray, "$position": 0}}

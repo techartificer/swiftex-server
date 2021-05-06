@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/techartificer/swiftex/models"
+	"github.com/techartificer/swiftex/serializer"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,6 +22,7 @@ type ShopRepository interface {
 	UpdateShopByID(db *mongo.Database, ID string, shop *models.Shop) (*models.Shop, error)
 	Shops(db *mongo.Database, lastID string, limit int64) (*[]models.Shop, error)
 	Search(db *mongo.Database, query primitive.M) (*[]models.Shop, error)
+	AllShopsName(db *mongo.Database) (*[]serializer.AllShops, error)
 }
 
 type shopRepositoryImpl struct{}
@@ -32,6 +34,17 @@ func NewShopRepo() ShopRepository {
 		shopRepository = &shopRepositoryImpl{}
 	}
 	return shopRepository
+}
+
+func (s *shopRepositoryImpl) AllShopsName(db *mongo.Database) (*[]serializer.AllShops, error) {
+	shop := &models.Shop{}
+	shopCollection := db.Collection(shop.CollectionName())
+	cursor, err := shopCollection.Find(context.Background(), bson.M{})
+	var shops []serializer.AllShops
+	if err = cursor.All(context.Background(), &shops); err != nil {
+		return nil, err
+	}
+	return &shops, nil
 }
 
 func (s *shopRepositoryImpl) Create(db *mongo.Database, shop *models.Shop) (*models.Transaction, error) {

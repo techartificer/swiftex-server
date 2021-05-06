@@ -54,11 +54,12 @@ func ValidateAddAdmin(ctx echo.Context) (*models.Admin, error) {
 
 // ReqAdminUpdate holds status update data request data
 type ReqAdminUpdate struct {
-	Phone  string              `json:"phone,omitempty"  bson:"phone,omitempty"`
-	Name   string              `json:"name,omitempty" bson:"name,omitempty"`
-	Email  *string             `json:"email,omitempty" validate:"omitempty,email" bson:"email,omitempty"`
-	Role   constants.AdminRole `json:"role,omitempty" validate:"omitempty,isValidRole" bson:"role,omitempty"`
-	Status string              `json:"status,omitempty" validate:"omitempty,isValidStatus" bson:"status,omitempty"`
+	Phone    string              `json:"phone,omitempty"  bson:"phone,omitempty"`
+	Name     string              `json:"name,omitempty" bson:"name,omitempty"`
+	Email    *string             `json:"email,omitempty" validate:"omitempty,email" bson:"email,omitempty"`
+	Role     constants.AdminRole `json:"role,omitempty" validate:"omitempty,isValidRole" bson:"role,omitempty"`
+	Status   string              `json:"status,omitempty" validate:"omitempty,isValidStatus" bson:"status,omitempty"`
+	Password string              `json:"password,omitempty" validate:"omitempty" bson:"password,omitempty"`
 }
 
 func isValidStatus(fl validator.FieldLevel) bool {

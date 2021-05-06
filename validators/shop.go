@@ -13,9 +13,9 @@ type ShopCreateReq struct {
 	Phone         string `json:"phone,omitempty" validate:"required"`
 	Name          string `json:"name,omitempty" validate:"required,min=3,max=30"`
 	Email         string `json:"email,omitempty" validate:"required,email"`
-	Address       string `json:"address,omitempty" validate:"required"`
+	Address       string `json:"address,omitempty" validate:"omitempty"`
 	PickupAddress string `json:"pickupAddress,omitempty" validate:"required"`
-	DeliveryZone  string `json:"deliveryZone,omitempty" validate:"required"`
+	DeliveryZone  string `json:"deliveryZone,omitempty" validate:"omitempty"`
 	FBPage        string `json:"fbPage,omitempty" validate:"required"`
 	PickupArea    string `json:"pickupArea,omitempty" validate:"required"`
 }
