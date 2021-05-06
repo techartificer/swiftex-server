@@ -208,3 +208,35 @@ func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
 	}
 	return trxHistory, nil
 }
+
+type OrderChangeReq struct {
+	OrderIDs        []primitive.ObjectID `validate:"required" json:"orderIds"`
+	Text            string               `validate:"required" json:"text"`
+	Status          string               `validate:"required" json:"status"`
+	DeleveryBoyID   *primitive.ObjectID  `validate:"omitempty" json:"deleveryBoy"`
+	ShopModeratorID *primitive.ObjectID  `validate:"omitempty" json:"shopModerator"`
+	MerchantID      *primitive.ObjectID  `validate:"omitempty" json:"merchant"`
+	AdminID         *primitive.ObjectID  `validate:"omitempty" json:"admin"`
+}
+
+func OrderChangeStatus(ctx echo.Context) (*OrderChangeReq, error) {
+	body := &OrderChangeReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	userID := ctx.Get(constants.UserID).(primitive.ObjectID)
+	role := ctx.Get(constants.Role).(string)
+
+	switch constants.AdminRole(role) {
+	case constants.SuperAdmin:
+		body.AdminID = &userID
+	case constants.Admin:
+		body.AdminID = &userID
+	case constants.Moderator:
+		body.MerchantID = &userID
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	return body, nil
+}

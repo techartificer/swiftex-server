@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -35,6 +36,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.POST("/assign-rider/", assignRider, middlewares.JWTAuth(true))
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 	endpoint.POST("/deliver/:orderId/", deliverParcel, middlewares.RiderJWTAuth())
+	endpoint.PATCH("/change/status/", changeStatus, middlewares.JWTAuth(true))
 }
 
 func deliverParcel(ctx echo.Context) error {
@@ -585,5 +587,95 @@ func orderCreate(ctx echo.Context) error {
 	}
 	resp.Data = order
 	resp.Status = http.StatusCreated
+	return resp.Send(ctx)
+}
+
+type orderError struct {
+	Error   string             `json:"error"`
+	OrderID primitive.ObjectID `json:"orderId"`
+}
+
+func changeStatus(ctx echo.Context) error {
+	resp := response.Response{}
+	body, err := validators.OrderChangeStatus(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid order update request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderStatusUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	if body.Status == constants.Delivered {
+		resp.Title = "Invalid order status change request"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidOrderStatusUpdateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+
+	var wg sync.WaitGroup
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	errChan := make(chan orderError, len(body.OrderIDs))
+	ordersChan := make(chan models.Order, len(body.OrderIDs))
+
+	for _, orderId := range body.OrderIDs {
+		wg.Add(1)
+		go func(w *sync.WaitGroup, oid primitive.ObjectID) {
+			defer w.Done()
+			order, err := orderRepo.OrderByID(db, oid.Hex())
+			if err != nil {
+				errChan <- orderError{err.Error(), oid}
+				return
+			}
+			if order.DeliveredAt != nil {
+				errChan <- orderError{"Order already delivered", oid}
+				return
+			}
+			orderStatus := models.OrderStatus{
+				ID:              primitive.NewObjectID(),
+				Text:            body.Text,
+				DeleveryBoyID:   body.DeleveryBoyID,
+				AdminID:         body.AdminID,
+				MerchantID:      body.MerchantID,
+				ShopModeratorID: body.ShopModeratorID,
+				Status:          body.Status,
+				Time:            time.Now().UTC(),
+			}
+			order, err = orderRepo.AddOrderStatus(db, &orderStatus, oid.Hex())
+			if err != nil {
+				errChan <- orderError{err.Error(), oid}
+			} else {
+				ordersChan <- *order
+			}
+		}(&wg, orderId)
+	}
+	wg.Wait()
+	close(errChan)
+	close(ordersChan)
+
+	hasError := false
+	var errs []orderError
+	for err := range errChan {
+		hasError = true
+		logger.Log.Errorln(err)
+		errs = append(errs, err)
+	}
+	if hasError {
+		resp.Errors = errors.NewError("Update status not successfull")
+		resp.Data = errs
+		resp.Status = http.StatusInternalServerError
+		resp.Title = "Status update unsuccessful"
+		resp.Code = codes.DatabaseQueryFailed
+		return resp.Send(ctx)
+	}
+	var orders []models.Order
+	for order := range ordersChan {
+		orders = append(orders, order)
+	}
+	resp.Data = orders
+	resp.Status = http.StatusOK
 	return resp.Send(ctx)
 }
