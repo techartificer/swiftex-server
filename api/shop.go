@@ -162,7 +162,7 @@ func shopCreate(ctx echo.Context) error {
 func allShops(ctx echo.Context) error {
 	resp := response.Response{}
 	lastID, limit := ctx.QueryParam("lastId"), ctx.QueryParam("limit")
-	var limitNum int64
+	var limitNum int64 = 10
 	if limit != "" {
 		ln, err := strconv.Atoi(limit)
 		limitNum = int64(ln)

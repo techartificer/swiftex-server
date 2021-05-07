@@ -27,6 +27,7 @@ type Shop struct {
 	Moderators     []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators,omitempty"`
 	DeliveryCharge float64              `bson:"DeliveryCharge,omitempty" json:"deliveryCharge"`
 	COD            float64              `bson:"cod,omitempty" json:"cod"`
+	AdminID        primitive.ObjectID   `bson:"adminId,omitempty" json:"-"`
 	CreatedAt      time.Time            `bson:"createdAt,omitempty" json:"createdAt"`
 	UpdatedAt      time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
