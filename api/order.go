@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -12,6 +11,7 @@ import (
 	"github.com/techartificer/swiftex/constants/codes"
 	"github.com/techartificer/swiftex/data"
 	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/charge"
 	"github.com/techartificer/swiftex/lib/errors"
 	"github.com/techartificer/swiftex/lib/random"
 	"github.com/techartificer/swiftex/lib/response"
@@ -31,9 +31,9 @@ type orderError struct {
 
 func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/", ordersAdmin, middlewares.JWTAuth(true))
-	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.POST("/create/:shopId/", orderCreate, middlewares.JWTAuth(false), middlewares.HasShopAccess(), middlewares.ShopByID())
 	endpoint.GET("/all/:shopId/", orders, middlewares.JWTAuth(false), middlewares.HasShopAccess())
-	endpoint.PATCH("/id/:orderId/shopId/:shopId/", updateOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
+	endpoint.PATCH("/id/:orderId/shopId/:shopId/", updateOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess(), middlewares.ShopByID())
 	endpoint.PATCH("/add/order-status/:orderId/", addOrderStatus, middlewares.JWTAuth(true)) // TODO: Delivery boy access
 	endpoint.PATCH("/cancel/id/:orderId/shopId/:shopId/", cancelOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess())
 	endpoint.GET("/id/:orderId/shopId/:shopId/", orderByID, middlewares.JWTAuth(false), middlewares.HasShopAccess())
@@ -282,7 +282,7 @@ func trackOrder(ctx echo.Context) error {
 
 func updateOrder(ctx echo.Context) error {
 	resp := response.Response{}
-	orderID, shopID := ctx.Param("orderId"), ctx.Param("shopId")
+	orderID := ctx.Param("orderId")
 	body, err := validators.UpdateOrder(ctx)
 	if err != nil {
 		logger.Log.Errorln(err)
@@ -294,7 +294,7 @@ func updateOrder(ctx echo.Context) error {
 	}
 	db := database.GetDB()
 	orderRepo := data.NewOrderRepo()
-
+	shop := ctx.Get("shop").(models.Shop)
 	order, err := orderRepo.OrderByID(db, orderID)
 	if err != nil {
 		logger.Log.Errorln(err)
@@ -311,6 +311,7 @@ func updateOrder(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
+	body.Charge = charge.Calculate(body.Weight, body.DeliveryType, body.RecipientCity, shop.DeliveryCharge)
 	if order.DeliveredAt != nil || order.IsPicked || order.IsCancelled {
 		resp.Title = "You can not update parcel"
 		resp.Status = http.StatusLocked
@@ -318,7 +319,7 @@ func updateOrder(ctx echo.Context) error {
 		resp.Errors = errors.NewError("Parcel status is not allowing to update")
 		return resp.Send(ctx)
 	}
-	updatedOrder, err := orderRepo.UpdateOrder(db, body, orderID, shopID)
+	updatedOrder, err := orderRepo.UpdateOrder(db, body, orderID, shop.ID.Hex())
 	if err != nil {
 		logger.Log.Errorln(err)
 		if err == mongo.ErrNoDocuments {
@@ -552,18 +553,25 @@ func orderCreate(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	shopID := ctx.Param("shopId")
-	_shopID, err := primitive.ObjectIDFromHex(shopID)
+	db := database.GetDB()
+	shop := ctx.Get("shop").(models.Shop)
 	if err != nil {
-		log.Println(err)
-		resp.Title = "Invalid shop ID"
-		resp.Status = http.StatusBadRequest
-		resp.Code = codes.InvalidShopCreateData
+		logger.Log.Errorln(err)
+		if mongo.ErrNoDocuments == err {
+			resp.Title = "Shop not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.ShopNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	order.ShopID = _shopID
-	db := database.GetDB()
+	order.Charge = charge.Calculate(order.Weight, order.DeliveryType, order.RecipientCity, shop.DeliveryCharge)
+	order.ShopID = shop.ID
 	orderRepo := data.NewOrderRepo()
 	tid, err := random.GenerateRandomString(constants.TrackIDSize)
 	if err != nil {

@@ -76,3 +76,8 @@ const (
 	RescheduleMsg string = "Parcel has been rescheduled"
 	DeleveredMsg  string = "Successfully delevered at your door"
 )
+
+const (
+	DeliveryCharge float64 = 60
+	CodCharge      float64 = 1
+)

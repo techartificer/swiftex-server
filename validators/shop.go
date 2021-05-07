@@ -29,17 +29,19 @@ func ValidateShopCreate(ctx echo.Context) (*models.Shop, error) {
 		return nil, err
 	}
 	shop := &models.Shop{
-		ID:            primitive.NewObjectID(),
-		Name:          body.Name,
-		Email:         body.Email,
-		Phone:         body.Phone,
-		Address:       body.Address,
-		PickupAddress: body.PickupAddress,
-		PickupArea:    body.PickupArea,
-		FBPage:        body.FBPage,
-		DeliveryZone:  body.DeliveryZone,
-		Status:        constants.Active,
-		CreatedAt:     time.Now().UTC(),
+		ID:             primitive.NewObjectID(),
+		Name:           body.Name,
+		Email:          body.Email,
+		Phone:          body.Phone,
+		Address:        body.Address,
+		PickupAddress:  body.PickupAddress,
+		PickupArea:     body.PickupArea,
+		FBPage:         body.FBPage,
+		DeliveryZone:   body.DeliveryZone,
+		Status:         constants.Active,
+		DeliveryCharge: constants.DeliveryCharge,
+		COD:            constants.CodCharge,
+		CreatedAt:      time.Now().UTC(),
 	}
 	return shop, nil
 }
