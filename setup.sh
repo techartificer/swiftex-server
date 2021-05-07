@@ -1,9 +1,9 @@
 #!/bin/bash
 # download config file from firestore
-wget -O config.yml https://firebasestorage.googleapis.com/v0/b/swiftexbd.appspot.com/o/config.stage.yml\?alt\=media\&token\=3ef08b94-8442-4a72-9cf6-61f6e152b0f4
+wget -O config.yml https://firebasestorage.googleapis.com/v0/b/swiftexbd.appspot.com/o/config.stage.yml\?alt\=media\&token\=947e59c7-7e64-4f8f-b695-2a0b6ff3d00b
 
 # download swiftex-firebase.json from firestore
-wget -O swiftex-firebase.json https://firebasestorage.googleapis.com/v0/b/swiftexbd.appspot.com/o/swiftex-firebase.json\?alt\=media\&token\=91db4d89-de7e-441c-8c79-2267656c0d88
+wget -O swiftex-firebase.json https://firebasestorage.googleapis.com/v0/b/swiftexbd.appspot.com/o/swiftex-firebase.json\?alt\=media\&token\=d7ee69b0-0967-48ad-8bb9-9590c223aa94
 
 cat wget-log
 

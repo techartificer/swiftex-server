@@ -1,6 +1,7 @@
 config.yml
 config.prod.yml
 config.stage.yml
+config.dev.yml
 __debug_bin
 swiftex
 swiftex-firebase.json
