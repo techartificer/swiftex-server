@@ -78,6 +78,62 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	return order, nil
 }
 
+type MultipleOrderCreateReq struct {
+	Orders []OrderCreateReq `validate:"required" json:"orders"`
+}
+
+func ValidateMultipleOrderCreate(ctx echo.Context) ([]models.Order, error) {
+	body := MultipleOrderCreateReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	created := constants.Created
+	var orders []models.Order
+	for _, o := range body.Orders {
+		order := models.Order{
+			ID:                    primitive.NewObjectID(),
+			RiderID:               nil,
+			ShopModeratorID:       nil,
+			MerchantID:            nil,
+			RecipientName:         o.RecipientName,
+			RecipientPhone:        o.RecipientPhone,
+			RecipientCity:         o.RecipientCity,
+			RecipientThana:        o.RecipientThana,
+			RecipientZip:          o.RecipientZip,
+			RecipientArea:         o.RecipientArea,
+			RecipientAddress:      o.RecipientAddress,
+			PackageCode:           o.PackageCode,
+			PercelType:            o.PercelType,
+			RequestedDeliveryTime: o.RequestedDeliveryTime,
+			PickAddress:           o.PickAddress,
+			PickHub:               o.PickHub,
+			Price:                 o.Price,
+			NumberOfItems:         o.NumberOfItems,
+			Comments:              o.Comments,
+			DeliveryType:          o.DeliveryType,
+			PaymentStatus:         o.PaymentStatus,
+			Weight:                o.Weight,
+			IsCancelled:           false,
+			CurrentStatus:         &created,
+			IsAccepted:            false,
+			Status: []models.OrderStatus{
+				{
+					ID:     primitive.NewObjectID(),
+					Text:   "Your order have benn placed successfully",
+					Status: constants.Created,
+					Time:   time.Now().UTC(),
+				},
+			},
+			CreatedAt: time.Now().UTC(),
+		}
+		orders = append(orders, order)
+	}
+	return orders, nil
+}
+
 type OrderStatusUpdateReq struct {
 	Text            string             `validate:"required" json:"text"`
 	DeleveryBoyID   primitive.ObjectID `validate:"omitempty" json:"deleveryBoy"`

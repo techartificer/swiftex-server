@@ -21,6 +21,7 @@ type OrderRepository interface {
 	OrderByID(db *mongo.Database, ID string) (*models.Order, error)
 	TrackOrder(db *mongo.Database, trackID string) (*models.Order, error)
 	Dashboard(db *mongo.Database, shopID string, startDate, endDate *time.Time) (*map[string]int64, error)
+	CreateMultiple(db *mongo.Database, orders []interface{}) error
 }
 
 type orderRepositoryImpl struct{}
@@ -235,4 +236,11 @@ func (o *orderRepositoryImpl) AddOrderStatus(db *mongo.Database, orderStatus *mo
 	push := bson.M{"status": bson.M{"$each": orderStatusArray, "$position": 0}}
 	err = orderCollection.FindOneAndUpdate(context.Background(), filter, bson.M{"$set": query, "$push": push}, &opt).Decode(updatedOrder)
 	return updatedOrder, err
+}
+
+func (o *orderRepositoryImpl) CreateMultiple(db *mongo.Database, orders []interface{}) error {
+	order := models.Order{}
+	orderCollection := db.Collection(order.CollectionName())
+	_, err := orderCollection.InsertMany(context.Background(), orders)
+	return err
 }

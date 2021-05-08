@@ -42,6 +42,7 @@ func RegisterOrderRoutes(endpoint *echo.Group) {
 	endpoint.GET("/riders-parcel/:riderId/", ridersParcel, middlewares.RiderJWTAuth())
 	endpoint.POST("/deliver/:orderId/", deliverParcel, middlewares.RiderJWTAuth())
 	endpoint.PATCH("/change/status/", changeStatus, middlewares.JWTAuth(true))
+	endpoint.POST("/create/:shopId/multiples/", createMultipleOrder, middlewares.JWTAuth(false), middlewares.HasShopAccess(), middlewares.ShopByID())
 }
 
 func deliverParcel(ctx echo.Context) error {
@@ -680,6 +681,57 @@ func changeStatus(ctx echo.Context) error {
 	var orders []models.Order
 	for order := range ordersChan {
 		orders = append(orders, order)
+	}
+	resp.Data = orders
+	resp.Status = http.StatusOK
+	return resp.Send(ctx)
+}
+
+func createMultipleOrder(ctx echo.Context) error {
+	resp := response.Response{}
+	orders, err := validators.ValidateMultipleOrderCreate(ctx)
+	if err != nil {
+		logger.Log.Errorln(err)
+		resp.Title = "Invalid order create request data"
+		resp.Status = http.StatusBadRequest
+		resp.Code = codes.InvalidShopCreateData
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	shop := ctx.Get("shop").(models.Shop)
+	var os []interface{}
+	for i := 0; i < len(orders); i++ {
+		order := &orders[i]
+		order.ShopID = shop.ID
+		order.Charge = charge.Calculate(order.Weight, order.DeliveryType, order.RecipientCity, shop.DeliveryCharge)
+		tid, err := random.GenerateRandomString(constants.TrackIDSize)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Something went wrong"
+			resp.Status = http.StatusInternalServerError
+			resp.Code = codes.SomethingWentWrong
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		order.TrackID = tid
+		os = append(os, order)
+	}
+	db := database.GetDB()
+	orderRepo := data.NewOrderRepo()
+	if err := orderRepo.CreateMultiple(db, os); err != nil {
+		logger.Log.Errorln(err)
+		if errors.IsMongoDupError(err) {
+			resp.Title = "Order track Id already exist"
+			resp.Status = http.StatusConflict
+			resp.Code = codes.OrderAlreadyExist
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
 	}
 	resp.Data = orders
 	resp.Status = http.StatusOK
