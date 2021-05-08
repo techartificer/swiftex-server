@@ -1,10 +1,12 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/techartificer/swiftex/database"
 	"github.com/techartificer/swiftex/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,11 +18,6 @@ func echoMonitoring() echo.MiddlewareFunc {
 
 			req := c.Request()
 			res := c.Response()
-
-			if err := next(c); err != nil {
-				c.Error(err)
-			}
-
 			timeTaken := time.Since(start).Seconds()
 			size := res.Size
 
@@ -63,11 +60,13 @@ func echoMonitoring() echo.MiddlewareFunc {
 				TimeTaken: timeTaken,
 				CreatedAt: time.Now().UTC(),
 			}
-			// db := database.DB()
-			// if err := db.Table(l.TableName()).Create(&l).Error; err != nil {
-			// 	logger.Log.Log.Errorln(err)
-			// }
-			logger.Log.Printf("%+v", l)
+			db := database.GetDB()
+			logCollection := db.Collection("logs")
+			if l.Status != 204 {
+				if _, err := logCollection.InsertOne(context.Background(), l); err != nil {
+					logger.Log.Errorln(err)
+				}
+			}
 			return nil
 		}
 	}

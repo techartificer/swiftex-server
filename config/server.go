@@ -10,6 +10,7 @@ type Server struct {
 	Host       string
 	Port       int
 	BcryptCost int
+	Env        string
 }
 
 var server Server
@@ -29,5 +30,6 @@ func LoadServer() {
 		Host:       viper.GetString("server.host"),
 		Port:       viper.GetInt("server.port"),
 		BcryptCost: viper.GetInt("server.bcryptCost"),
+		Env:        viper.GetString("server.env"),
 	}
 }

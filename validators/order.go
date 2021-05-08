@@ -135,7 +135,7 @@ func ValidateMultipleOrderCreate(ctx echo.Context) ([]models.Order, error) {
 }
 
 type OrderStatusUpdateReq struct {
-	Text            string             `validate:"required" json:"text"`
+	Text            string             `validate:"omitempty" json:"text"`
 	DeleveryBoyID   primitive.ObjectID `validate:"omitempty" json:"deleveryBoy"`
 	ShopModeratorID primitive.ObjectID `validate:"omitempty" json:"shopModerator"`
 	MerchantID      primitive.ObjectID `validate:"omitempty" json:"merchant"`

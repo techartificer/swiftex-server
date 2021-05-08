@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/techartificer/swiftex/api"
+	"github.com/techartificer/swiftex/config"
 )
 
 var router = echo.New()
@@ -32,7 +33,9 @@ func GetRouter() http.Handler {
 		},
 	}))
 	router.Use(middleware.Recover())
-	// router.Use(echoMonitoring())
+	if config.GetServer().Env == "production" {
+		router.Use(echoMonitoring())
+	}
 	router.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "time: ${time_rfc3339}, method: ${method}, uri: ${uri}, status: ${status}\n",
 	}))
@@ -44,7 +47,7 @@ func GetRouter() http.Handler {
 
 	router.Pre(middleware.AddTrailingSlash())
 	router.GET("/", func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": "v1.0.0"})
+		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": "v1.0.2"})
 	})
 
 	router.GET("/debug/pprof/*", wrapHandler(http.DefaultServeMux))
