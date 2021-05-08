@@ -47,7 +47,7 @@ func GetRouter() http.Handler {
 
 	router.Pre(middleware.AddTrailingSlash())
 	router.GET("/", func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": "v1.0.2"})
+		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": "v1.0.3"})
 	})
 
 	router.GET("/debug/pprof/*", wrapHandler(http.DefaultServeMux))

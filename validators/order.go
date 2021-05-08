@@ -262,7 +262,7 @@ func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
 
 type OrderChangeReq struct {
 	OrderIDs        []primitive.ObjectID `validate:"required" json:"orderIds"`
-	Text            string               `validate:"required" json:"text"`
+	Text            string               `validate:"omitempty" json:"text"`
 	Status          string               `validate:"required" json:"status"`
 	DeleveryBoyID   *primitive.ObjectID  `validate:"omitempty" json:"deleveryBoy"`
 	ShopModeratorID *primitive.ObjectID  `validate:"omitempty" json:"shopModerator"`
