@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/techartificer/swiftex/api"
 	"github.com/techartificer/swiftex/config"
+	"github.com/techartificer/swiftex/constants"
 )
 
 var router = echo.New()
@@ -47,7 +48,7 @@ func GetRouter() http.Handler {
 
 	router.Pre(middleware.AddTrailingSlash())
 	router.GET("/", func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": "v1.0.3"})
+		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": constants.Version})
 	})
 
 	router.GET("/debug/pprof/*", wrapHandler(http.DefaultServeMux))
