@@ -10,23 +10,26 @@ import (
 
 // Shop holds shops shop data
 type Shop struct {
-	ID            primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
-	Name          string               `bson:"name,omitempty" json:"name"`
-	ShopID        string               `bson:"shopId,omitempty" json:"shopId"`
-	Phone         string               `bson:"phone,omitempty" json:"phone"`
-	Email         string               `bson:"email,omitempty" json:"email"`
-	Address       string               `bson:"address,omitempty" json:"address"`
-	PickupAddress string               `bson:"pickupAddress,omitempty" json:"pickupAddress"`
-	PickupArea    string               `bson:"pickupArea,omitempty" json:"pickupArea"`
-	DeliveryZone  string               `bson:"deliveryZone,omitempty" json:"deliveryZone"`
-	Coupon        string               `bson:"coupon,omitempty" json:"coupon,omitempty"`
-	Image         string               `bson:"image,omitempty" json:"image,omitempty"`
-	Status        string               `bson:"status,omitempty" json:"status"`
-	Owner         primitive.ObjectID   `bson:"owner,omitempty" json:"owner"`
-	FBPage        string               `bson:"fbPage,omitempty" json:"fbPage"`
-	Moderators    []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators,omitempty"`
-	CreatedAt     time.Time            `bson:"createdAt,omitempty" json:"createdAt"`
-	UpdatedAt     time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
+	ID             primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
+	Name           string               `bson:"name,omitempty" json:"name"`
+	ShopID         string               `bson:"shopId,omitempty" json:"shopId"`
+	Phone          string               `bson:"phone,omitempty" json:"phone"`
+	Email          string               `bson:"email,omitempty" json:"email"`
+	Address        string               `bson:"address,omitempty" json:"address"`
+	PickupAddress  string               `bson:"pickupAddress,omitempty" json:"pickupAddress"`
+	PickupArea     string               `bson:"pickupArea,omitempty" json:"pickupArea"`
+	DeliveryZone   string               `bson:"deliveryZone,omitempty" json:"deliveryZone"`
+	Coupon         string               `bson:"coupon,omitempty" json:"coupon,omitempty"`
+	Image          string               `bson:"image,omitempty" json:"image,omitempty"`
+	Status         string               `bson:"status,omitempty" json:"status"`
+	Owner          primitive.ObjectID   `bson:"owner,omitempty" json:"owner"`
+	FBPage         string               `bson:"fbPage,omitempty" json:"fbPage"`
+	Moderators     []primitive.ObjectID `bson:"moderators,omitempty" json:"moderators,omitempty"`
+	DeliveryCharge float64              `bson:"DeliveryCharge,omitempty" json:"deliveryCharge"`
+	COD            float64              `bson:"cod,omitempty" json:"cod"`
+	AdminID        primitive.ObjectID   `bson:"adminId,omitempty" json:"-"`
+	CreatedAt      time.Time            `bson:"createdAt,omitempty" json:"createdAt"`
+	UpdatedAt      time.Time            `bson:"updatedAt,omitempty" json:"updatedAt"`
 }
 
 // CollectionName returns name of the models

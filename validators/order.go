@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants"
-	"github.com/techartificer/swiftex/lib/charge"
 	"github.com/techartificer/swiftex/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -39,14 +38,12 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	if err := GetValidationError(body); err != nil {
 		return nil, err
 	}
-	_charge := charge.Calculate(body.Weight, body.DeliveryType, body.RecipientCity)
 	created := constants.Created
 	order := &models.Order{
 		ID:                    primitive.NewObjectID(),
 		RiderID:               nil,
 		ShopModeratorID:       nil,
 		MerchantID:            nil,
-		Charge:                _charge,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,
@@ -81,8 +78,64 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	return order, nil
 }
 
+type MultipleOrderCreateReq struct {
+	Orders []OrderCreateReq `validate:"required" json:"orders"`
+}
+
+func ValidateMultipleOrderCreate(ctx echo.Context) ([]models.Order, error) {
+	body := MultipleOrderCreateReq{}
+	if err := ctx.Bind(&body); err != nil {
+		return nil, err
+	}
+	if err := GetValidationError(body); err != nil {
+		return nil, err
+	}
+	created := constants.Created
+	var orders []models.Order
+	for _, o := range body.Orders {
+		order := models.Order{
+			ID:                    primitive.NewObjectID(),
+			RiderID:               nil,
+			ShopModeratorID:       nil,
+			MerchantID:            nil,
+			RecipientName:         o.RecipientName,
+			RecipientPhone:        o.RecipientPhone,
+			RecipientCity:         o.RecipientCity,
+			RecipientThana:        o.RecipientThana,
+			RecipientZip:          o.RecipientZip,
+			RecipientArea:         o.RecipientArea,
+			RecipientAddress:      o.RecipientAddress,
+			PackageCode:           o.PackageCode,
+			PercelType:            o.PercelType,
+			RequestedDeliveryTime: o.RequestedDeliveryTime,
+			PickAddress:           o.PickAddress,
+			PickHub:               o.PickHub,
+			Price:                 o.Price,
+			NumberOfItems:         o.NumberOfItems,
+			Comments:              o.Comments,
+			DeliveryType:          o.DeliveryType,
+			PaymentStatus:         o.PaymentStatus,
+			Weight:                o.Weight,
+			IsCancelled:           false,
+			CurrentStatus:         &created,
+			IsAccepted:            false,
+			Status: []models.OrderStatus{
+				{
+					ID:     primitive.NewObjectID(),
+					Text:   "Your order have benn placed successfully",
+					Status: constants.Created,
+					Time:   time.Now().UTC(),
+				},
+			},
+			CreatedAt: time.Now().UTC(),
+		}
+		orders = append(orders, order)
+	}
+	return orders, nil
+}
+
 type OrderStatusUpdateReq struct {
-	Text            string             `validate:"required" json:"text"`
+	Text            string             `validate:"omitempty" json:"text"`
 	DeleveryBoyID   primitive.ObjectID `validate:"omitempty" json:"deleveryBoy"`
 	ShopModeratorID primitive.ObjectID `validate:"omitempty" json:"shopModerator"`
 	MerchantID      primitive.ObjectID `validate:"omitempty" json:"merchant"`
@@ -116,7 +169,7 @@ type OrderUpdateReq struct {
 	RiderID               primitive.ObjectID `validate:"omitempty" json:"riderId"`
 	RecipientName         string             `validate:"omitempty" json:"recipientName"`
 	RecipientPhone        string             `validate:"omitempty" json:"recipientPhone"`
-	RecipientCity         string             `validate:"omitempty" json:"recipientCity"`
+	RecipientCity         string             `validate:"required" json:"recipientCity"`
 	RecipientThana        string             `validate:"omitempty" json:"recipientThana"`
 	RecipientArea         string             `validate:"omitempty" json:"recipientArea"`
 	RecipientZip          string             `validate:"omitempty" json:"recipientZip"`
@@ -130,8 +183,8 @@ type OrderUpdateReq struct {
 	PickHub               string             `validate:"omitempty" json:"pickHub"`
 	Comments              string             `validate:"omitempty,max=300" json:"comments"`
 	NumberOfItems         int                `validate:"omitempty" json:"numberOfItems"`
-	DeliveryType          string             `validate:"omitempty" json:"deliveryType"`
-	Weight                float32            `validate:"omitempty,number,gt=0" json:"weight"`
+	DeliveryType          string             `validate:"required" json:"deliveryType"`
+	Weight                float32            `validate:"required,number,gt=0" json:"weight"`
 }
 
 func UpdateOrder(ctx echo.Context) (*models.Order, error) {
@@ -143,10 +196,8 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 		return nil, err
 	}
 	UserID := ctx.Get(constants.UserID).(primitive.ObjectID)
-	_charge := charge.Calculate(body.Weight, body.DeliveryType, body.RecipientCity)
 	order := &models.Order{
 		RiderID:               &body.RiderID,
-		Charge:                _charge,
 		RecipientName:         body.RecipientName,
 		RecipientPhone:        body.RecipientPhone,
 		RecipientCity:         body.RecipientCity,
@@ -211,7 +262,7 @@ func ValidateOrderDeliver(ctx echo.Context) (*models.TrxHistory, error) {
 
 type OrderChangeReq struct {
 	OrderIDs        []primitive.ObjectID `validate:"required" json:"orderIds"`
-	Text            string               `validate:"required" json:"text"`
+	Text            string               `validate:"omitempty" json:"text"`
 	Status          string               `validate:"required" json:"status"`
 	DeleveryBoyID   *primitive.ObjectID  `validate:"omitempty" json:"deleveryBoy"`
 	ShopModeratorID *primitive.ObjectID  `validate:"omitempty" json:"shopModerator"`

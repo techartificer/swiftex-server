@@ -19,6 +19,7 @@ const (
 	BearerTokenGiven             ErrorCode = "401002"
 	InvalidAuthorizationToken    ErrorCode = "401003"
 	InvalidAccountType           ErrorCode = "401004"
+	JWTExpired                   ErrorCode = "401005"
 	StatusNotActive              ErrorCode = "403001"
 	NotSuperAdmin                ErrorCode = "403002"
 	AccessDenied                 ErrorCode = "403003"

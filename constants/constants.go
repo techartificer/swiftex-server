@@ -3,6 +3,8 @@ package constants
 // AdminRole is the role type of admin
 type AdminRole string
 
+const Version = "v1.0.4"
+
 const (
 	AdminType    string = "Admin"
 	MerchantType string = "Merchant"
@@ -75,4 +77,9 @@ const (
 	ReturnedMsg   string = "Parcel has been returned"
 	RescheduleMsg string = "Parcel has been rescheduled"
 	DeleveredMsg  string = "Successfully delevered at your door"
+)
+
+const (
+	DeliveryCharge float64 = 60
+	CodCharge      float64 = 1
 )

@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	jwtGo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/constants/codes"
@@ -35,15 +36,19 @@ func RiderJWTAuth() echo.MiddlewareFunc {
 			claims, _, err := jwt.ExtractAndValidateToken(ctx)
 			if err != nil {
 				logger.Log.Errorln(err)
-				resp.Status = http.StatusUnauthorized
+				ve, _ := err.(*jwtGo.ValidationError)
 				resp.Code = codes.InvalidAuthorizationToken
-				resp.Title = "Unauthorized request"
+				if ve.Errors == jwtGo.ValidationErrorExpired {
+					resp.Code = codes.JWTExpired
+				}
+				resp.Status = http.StatusUnauthorized
+				resp.Title = err.Error()
 				resp.Errors = err
 				return resp.Send(ctx)
 			}
 			if claims.AccountType != constants.AdminType && claims.AccountType != constants.RiderType {
-				resp.Status = http.StatusUnauthorized
-				resp.Code = codes.InvalidAuthorizationToken
+				resp.Status = http.StatusForbidden
+				resp.Code = codes.InvalidAccountType
 				resp.Title = "You are not allowed"
 				return resp.Send(ctx)
 			}
@@ -62,15 +67,19 @@ func JWTAuth(isAdmin bool) echo.MiddlewareFunc {
 			claims, _, err := jwt.ExtractAndValidateToken(ctx)
 			if err != nil {
 				logger.Log.Errorln(err)
+				ve, _ := err.(*jwtGo.ValidationError)
 				resp.Status = http.StatusUnauthorized
 				resp.Code = codes.InvalidAuthorizationToken
-				resp.Title = "Unauthorized request"
+				if ve.Errors == jwtGo.ValidationErrorExpired {
+					resp.Code = codes.JWTExpired
+				}
+				resp.Title = err.Error()
 				resp.Errors = err
 				return resp.Send(ctx)
 			}
 			if isAdmin && claims.AccountType != constants.AdminType {
-				resp.Status = http.StatusUnauthorized
-				resp.Code = codes.InvalidAuthorizationToken
+				resp.Status = http.StatusForbidden
+				resp.Code = codes.InvalidAccountType
 				resp.Title = "You are not allowed"
 				return resp.Send(ctx)
 			}

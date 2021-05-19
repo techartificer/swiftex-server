@@ -29,30 +29,35 @@ func ValidateShopCreate(ctx echo.Context) (*models.Shop, error) {
 		return nil, err
 	}
 	shop := &models.Shop{
-		ID:            primitive.NewObjectID(),
-		Name:          body.Name,
-		Email:         body.Email,
-		Phone:         body.Phone,
-		Address:       body.Address,
-		PickupAddress: body.PickupAddress,
-		PickupArea:    body.PickupArea,
-		FBPage:        body.FBPage,
-		DeliveryZone:  body.DeliveryZone,
-		Status:        constants.Active,
-		CreatedAt:     time.Now().UTC(),
+		ID:             primitive.NewObjectID(),
+		Name:           body.Name,
+		Email:          body.Email,
+		Phone:          body.Phone,
+		Address:        body.Address,
+		PickupAddress:  body.PickupAddress,
+		PickupArea:     body.PickupArea,
+		FBPage:         body.FBPage,
+		DeliveryZone:   body.DeliveryZone,
+		Status:         constants.Active,
+		DeliveryCharge: constants.DeliveryCharge,
+		COD:            constants.CodCharge,
+		CreatedAt:      time.Now().UTC(),
 	}
 	return shop, nil
 }
 
 type ShopUpdateReq struct {
-	Phone         string `json:"phone,omitempty"`
-	Name          string `json:"name,omitempty" validate:"omitempty,min=3,max=30"`
-	Email         string `json:"email,omitempty" validate:"omitempty,email"`
-	Address       string `json:"address,omitempty"`
-	PickupAddress string `json:"pickupAddress,omitempty"`
-	DeliveryZone  string `json:"deliveryZone,omitempty"`
-	FBPage        string `json:"fbPage,omitempty"`
-	PickupArea    string `json:"pickupArea,omitempty"`
+	Phone          string  `json:"phone,omitempty"`
+	Name           string  `json:"name,omitempty" validate:"omitempty,min=3,max=30"`
+	Email          string  `json:"email,omitempty" validate:"omitempty,email"`
+	Address        string  `json:"address,omitempty"`
+	PickupAddress  string  `json:"pickupAddress,omitempty"`
+	DeliveryZone   string  `json:"deliveryZone,omitempty"`
+	FBPage         string  `json:"fbPage,omitempty"`
+	PickupArea     string  `json:"pickupArea,omitempty"`
+	DeliveryCharge float64 `json:"deliveryCharge,omitempty"`
+	COD            float64 `json:"cod,omitempty"`
+	Status         string  `json:"status,omitempty"`
 }
 
 func ValidateShopUpdate(ctx echo.Context) (*models.Shop, error) {
@@ -73,6 +78,14 @@ func ValidateShopUpdate(ctx echo.Context) (*models.Shop, error) {
 		FBPage:        body.FBPage,
 		DeliveryZone:  body.DeliveryZone,
 		UpdatedAt:     time.Now().UTC(),
+	}
+	role := ctx.Get(constants.Role).(string)
+	userId := ctx.Get(constants.UserID).(primitive.ObjectID)
+	if role == string(constants.SuperAdmin) || role == string(constants.Admin) {
+		shop.COD = body.COD
+		shop.DeliveryCharge = body.DeliveryCharge
+		shop.Status = body.Status
+		shop.AdminID = userId
 	}
 	return shop, nil
 }

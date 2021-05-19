@@ -11,18 +11,19 @@ const (
 	Dhaka string = "Dhaka"
 )
 
-func Calculate(weight float32, deliverType string, city string) float64 {
-	var charge float64 = 60.0
-
+func Calculate(weight float32, deliverType string, city string, deliveryCharge float64) float64 {
+	if deliveryCharge == 0 {
+		deliveryCharge = constants.DeliveryCharge
+	}
 	cweight := math.Ceil(float64(weight)) - 1
-	charge += (20 * cweight)
+	charge := deliveryCharge + (20 * cweight)
 
 	isInsideDhaka := true
-	if strings.ToLower(city) != strings.ToLower(Dhaka) {
+	if !strings.EqualFold(city, Dhaka) {
 		charge += 70
 		isInsideDhaka = false
 	}
-	if strings.ToLower(deliverType) == strings.ToLower(constants.Express) && isInsideDhaka {
+	if strings.EqualFold(deliverType, constants.Express) && isInsideDhaka {
 		charge += 40
 	}
 	return charge

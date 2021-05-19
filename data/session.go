@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SessionRepository interface {
@@ -39,22 +38,25 @@ func (s *sessionRepoImpl) CreateSession(db *mongo.Database, sess *models.Session
 }
 
 func (s *sessionRepoImpl) UpdateSession(db *mongo.Database, token, accessToken string, userID primitive.ObjectID) (*models.Session, error) {
-	sess := &models.Session{}
-	filter := bson.D{{"refreshToken", token}}
-	after := options.After
-	opt := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
+	newsess := &models.Session{
+		ID:           primitive.NewObjectID(),
+		RefreshToken: jwt.NewRefresToken(userID),
+		UserID:       userID,
+		AccessToken:  accessToken,
+		CreatedAt:    time.Now().UTC(),
+		ExpiresOn:    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
 	}
-	update := bson.D{{"$set", bson.M{
-		"refreshToken": jwt.NewRefresToken(userID),
-		"accessToken":  accessToken,
-		"createdAt":    time.Now().UTC(),
-		"expiresOn":    time.Now().Add(time.Minute * time.Duration(config.GetJWT().RefreshTTL)),
-	}}}
-	collectionName := sess.CollectionName()
+	filter := bson.D{{"refreshToken", token}}
+	update := bson.D{{"$set", bson.M{"expiresOn": time.Now().Add(time.Second * 20)}}}
+	collectionName := newsess.CollectionName()
 	sessionCollection := db.Collection(collectionName)
-	err := sessionCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(sess)
-	return sess, err
+	sess := &models.Session{}
+	err := sessionCollection.FindOneAndUpdate(context.Background(), filter, update).Decode(sess)
+	if err != nil {
+		return nil, err
+	}
+	_, err = sessionCollection.InsertOne(context.Background(), newsess)
+	return newsess, err
 }
 
 func (s *sessionRepoImpl) Logout(db *mongo.Database, token string) error {
