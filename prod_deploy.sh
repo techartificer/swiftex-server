@@ -7,6 +7,6 @@ wget -O swiftex-firebase.json https://firebasestorage.googleapis.com/v0/b/swifte
 
 cat wget-log
 
-docker build -t caffeines/swiftex:1.0.4 .
+docker build -t caffeines/swiftex:1.0.5 .
 
 docker system prune

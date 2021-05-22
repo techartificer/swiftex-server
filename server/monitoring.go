@@ -18,6 +18,11 @@ func echoMonitoring() echo.MiddlewareFunc {
 
 			req := c.Request()
 			res := c.Response()
+
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+
 			timeTaken := time.Since(start).Seconds()
 			size := res.Size
 
