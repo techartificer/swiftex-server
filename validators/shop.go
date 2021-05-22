@@ -56,7 +56,7 @@ type ShopUpdateReq struct {
 	FBPage         string  `json:"fbPage,omitempty"`
 	PickupArea     string  `json:"pickupArea,omitempty"`
 	DeliveryCharge float64 `json:"deliveryCharge,omitempty"`
-	COD            float64 `json:"cod,omitempty"`
+	COD            float64 `json:"cod" validate:"number,gte=0"`
 	Status         string  `json:"status,omitempty"`
 }
 

@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
     web:
-        image: caffeines/swiftex:1.0
+        image: caffeines/swiftex:1.0.5
         container_name: swiftex
         restart: unless-stopped
         ports:
