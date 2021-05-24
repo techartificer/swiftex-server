@@ -45,7 +45,7 @@ func GetRouter() http.Handler {
 		AllowHeaders: []string{"*"},
 		AllowMethods: []string{"*"},
 	}))
-
+	router.Use(IPRateLimit())
 	router.Pre(middleware.AddTrailingSlash())
 	router.GET("/", func(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, map[string]string{"health": "OK", "version": constants.Version})

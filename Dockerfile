@@ -7,7 +7,7 @@ ENV GOPATH=/go
 ENV GOOS="linux"
 ENV GOARCH="amd64"
 ENV GO111MODULE=on
-RUN go env -w GOPROXY="https://goproxy.io,direct"
+# RUNy go env -w GOPROXY="https://goproxy.io,direct"
 
 WORKDIR ${GOPATH}/src/github.com/techartificer/swiftex-server
 
@@ -24,9 +24,6 @@ FROM alpine
 WORKDIR /root
 
 COPY --from=builder /go/bin/swiftex /usr/local/bin/swiftex
-COPY config.yml /root
-COPY swiftex-firebase.json /root
-
 EXPOSE 4141
 
 CMD [ "swiftex" ]

@@ -2,17 +2,24 @@ package firebase
 
 import (
 	"context"
+	"os"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
 	"github.com/techartificer/swiftex/lib/errors"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 )
 
 var authClient *auth.Client
 
 func Initialize() error {
-	opt := option.WithCredentialsFile("swiftex-firebase.json")
+	// log.Println(os.Getenv("FIREBASE"))
+	creds, err := google.CredentialsFromJSON(context.Background(), []byte(os.Getenv("FIREBASE")))
+	if err != nil {
+		return err
+	}
+	opt := option.WithCredentials(creds)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		return err

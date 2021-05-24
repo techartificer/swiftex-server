@@ -2,9 +2,10 @@ version: '3.3'
 
 services:
     web:
-        image: caffeines/swiftex:1.0.5
+        image: caffeines/swiftex:1.0.6
         container_name: swiftex
         restart: unless-stopped
+        env_file: .env
         ports:
             - 4141:4141
         command: ["swiftex"]

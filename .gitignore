@@ -8,3 +8,7 @@ swiftex-firebase.json
 *.out
 wget-log
 vendor
+.env
+stage.env
+prod.env
+dev.env

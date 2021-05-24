@@ -44,6 +44,7 @@ const (
 	OrderNotAcceptedYet          ErrorCode = "422005"
 	InsufficientBalance          ErrorCode = "422006"
 	OrderNotUpdateAble           ErrorCode = "423001"
+	TooManyRequest               ErrorCode = "429001"
 	DatabaseQueryFailed          ErrorCode = "500001"
 	UserLoginFailed              ErrorCode = "500002"
 	TokenRefreshFailed           ErrorCode = "500003"
