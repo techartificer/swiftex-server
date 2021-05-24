@@ -21,6 +21,9 @@ func init() {
 	if err := database.ConnectMongo(); err != nil {
 		panic(err)
 	}
+	if err := database.ConnectRedis(); err != nil {
+		panic(err)
+	}
 	if err := models.InitializeIndex(database.GetDB()); err != nil {
 		panic(err)
 	}

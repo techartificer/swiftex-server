@@ -45,7 +45,7 @@ func DisconnectMongo() error {
 // GetMongoClient returns created mongo client or error if not connected
 func GetMongoClient() (*mongo.Client, error) {
 	if instance == nil {
-		return nil, errors.New("Database not connected")
+		return nil, errors.New("database not connected")
 	}
 	return instance, nil
 }
