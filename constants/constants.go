@@ -31,10 +31,12 @@ const (
 var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}
 
 const (
-	// Active status: user can access
-	Active      string = "Active"
+	Active   string = "Active"
+	Deactive string = "Deactive"
+)
+
+const (
 	Cancelled   string = "Cancelled"
-	Deactive    string = "Deactive"
 	Created     string = "Created"
 	Delivered   string = "Delivered"
 	Accepted    string = "Accepted"

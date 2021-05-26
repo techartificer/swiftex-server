@@ -200,7 +200,7 @@ func forgotPassword(ctx echo.Context) error {
 		if err == mongo.ErrNoDocuments {
 			resp.Title = "You are not registered"
 			resp.Status = http.StatusNotFound
-			resp.Code = codes.AdminNotFound
+			resp.Code = codes.MerchantNotFound
 			resp.Errors = err
 			return resp.Send(ctx)
 		}

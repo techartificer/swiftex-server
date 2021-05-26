@@ -25,6 +25,7 @@ const (
 	AccessDenied                 ErrorCode = "403003"
 	InvalidTrxCode               ErrorCode = "403004"
 	TrxCodeExpired               ErrorCode = "403005"
+	MerchantDeactive             ErrorCode = "403006"
 	AdminNotFound                ErrorCode = "404001"
 	RefreshTokenNotFound         ErrorCode = "404002"
 	BearerTokenNotFound          ErrorCode = "404003"
