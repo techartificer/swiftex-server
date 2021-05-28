@@ -83,14 +83,16 @@ func updateAdmin(ctx echo.Context) error {
 		resp.Errors = err
 		return resp.Send(ctx)
 	}
-	body.Password, err = password.HashPassword(body.Password)
-	if err != nil {
-		logger.Log.Errorln(err)
-		resp.Title = "Password hash failed"
-		resp.Status = http.StatusInternalServerError
-		resp.Code = codes.PasswordHashFailed
-		resp.Errors = err
-		return resp.Send(ctx)
+	if body.Password != "" {
+		body.Password, err = password.HashPassword(body.Password)
+		if err != nil {
+			logger.Log.Errorln(err)
+			resp.Title = "Password hash failed"
+			resp.Status = http.StatusInternalServerError
+			resp.Code = codes.PasswordHashFailed
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 	}
 	admin, err := adminRepo.UpdateAdminByID(db, body, ID)
 	if err != nil {

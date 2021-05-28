@@ -3,7 +3,7 @@ package constants
 // AdminRole is the role type of admin
 type AdminRole string
 
-const Version = "v1.0.5"
+const Version = "v1.0.6 beta"
 
 const (
 	AdminType    string = "Admin"

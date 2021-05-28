@@ -32,6 +32,5 @@ func initSessionIndex(db *mongo.Database) error {
 	if err := createIndexWithTTL(sessionCol, bson.M{"expiresOn": 1}, 1); err != nil {
 		return err
 	}
-
 	return nil
 }
