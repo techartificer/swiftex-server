@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"errors"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -19,7 +20,7 @@ type OrderCreateReq struct {
 	RecipientAddress      string    `validate:"required" json:"recipientAddress"`
 	PackageCode           string    `validate:"omitempty" json:"packageCode"`
 	PaymentStatus         string    `validate:"required" json:"paymentStatus"`
-	Price                 float64   `validate:"required" json:"price"`
+	Price                 float64   `validate:"omitempty,number,gte=0" json:"price"`
 	PercelType            string    `validate:"required" json:"percelType"`
 	RequestedDeliveryTime time.Time `validate:"omitempty" json:"requestedDeliveryTime"`
 	PickAddress           string    `validate:"required" json:"pickAddress"`
@@ -30,6 +31,13 @@ type OrderCreateReq struct {
 	DeliveryType          string    `validate:"required" json:"deliveryType"`
 }
 
+func isPriceAcceptable(paymentStatus string, price float64) bool {
+	if paymentStatus == constants.COD && price <= 0 {
+		return false
+	}
+	return true
+}
+
 func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	body := OrderCreateReq{}
 	if err := ctx.Bind(&body); err != nil {
@@ -37,6 +45,9 @@ func ValidateOrderCreate(ctx echo.Context) (*models.Order, error) {
 	}
 	if err := GetValidationError(body); err != nil {
 		return nil, err
+	}
+	if flag := isPriceAcceptable(body.PaymentStatus, body.Price); !flag {
+		return nil, errors.New("price can not be zero")
 	}
 	created := constants.Created
 	order := &models.Order{
@@ -93,6 +104,9 @@ func ValidateMultipleOrderCreate(ctx echo.Context) ([]models.Order, error) {
 	created := constants.Created
 	var orders []models.Order
 	for _, o := range body.Orders {
+		if flag := isPriceAcceptable(o.PaymentStatus, o.Price); !flag {
+			return nil, errors.New("price can not be zero")
+		}
 		order := models.Order{
 			ID:                    primitive.NewObjectID(),
 			RiderID:               nil,
@@ -176,7 +190,7 @@ type OrderUpdateReq struct {
 	RecipientAddress      string             `validate:"omitempty" json:"recipientAddress"`
 	PackageCode           string             `validate:"omitempty" json:"packageCode"`
 	PaymentStatus         string             `validate:"omitempty" json:"paymentStatus"`
-	Price                 float64            `validate:"omitempty" json:"price"`
+	Price                 float64            `validate:"omitempty,number,gte=0" json:"price"`
 	PercelType            string             `validate:"omitempty" json:"percelType"`
 	RequestedDeliveryTime time.Time          `validate:"omitempty" json:"requestedDeliveryTime"`
 	PickAddress           string             `validate:"omitempty" json:"pickAddress"`
@@ -194,6 +208,9 @@ func UpdateOrder(ctx echo.Context) (*models.Order, error) {
 	}
 	if err := GetValidationError(body); err != nil {
 		return nil, err
+	}
+	if flag := isPriceAcceptable(body.PaymentStatus, body.Price); !flag {
+		return nil, errors.New("price can not be zero")
 	}
 	UserID := ctx.Get(constants.UserID).(primitive.ObjectID)
 	order := &models.Order{
