@@ -7,10 +7,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/techartificer/swiftex/constants"
 	"github.com/techartificer/swiftex/constants/codes"
+	"github.com/techartificer/swiftex/data"
+	"github.com/techartificer/swiftex/database"
+	"github.com/techartificer/swiftex/lib/errors"
 	"github.com/techartificer/swiftex/lib/jwt"
 	"github.com/techartificer/swiftex/lib/response"
 	"github.com/techartificer/swiftex/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func setHeader(resp response.Response, ctx echo.Context, claims *jwt.Claims) error {
@@ -97,6 +101,30 @@ func IsSuperAdmin() echo.MiddlewareFunc {
 			resp := response.Response{}
 			role := ctx.Get(constants.Role)
 			if role != string(constants.SuperAdmin) {
+				resp.Status = http.StatusForbidden
+				resp.Code = codes.NotSuperAdmin
+				resp.Title = "You are not super admin"
+				return resp.Send(ctx)
+			}
+			db := database.GetDB()
+			adminRepo := data.NewAdminRepo()
+			userId := ctx.Get(constants.UserID).(primitive.ObjectID)
+			admin, err := adminRepo.FindByID(db, userId)
+			if err != nil {
+				if err == mongo.ErrNoDocuments {
+					resp.Title = "Admin not found"
+					resp.Status = http.StatusNotFound
+					resp.Code = codes.AdminNotFound
+					resp.Errors = errors.NewError(err.Error())
+					return resp.Send(ctx)
+				}
+				resp.Title = "Something went wrong"
+				resp.Status = http.StatusInternalServerError
+				resp.Code = codes.DatabaseQueryFailed
+				resp.Errors = err
+				return resp.Send(ctx)
+			}
+			if admin.Role != constants.SuperAdmin {
 				resp.Status = http.StatusForbidden
 				resp.Code = codes.NotSuperAdmin
 				resp.Title = "You are not super admin"

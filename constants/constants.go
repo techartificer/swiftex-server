@@ -83,5 +83,5 @@ const (
 
 const (
 	DeliveryCharge float64 = 60
-	CodCharge      float64 = 1
+	CodCharge      float64 = 0
 )
