@@ -19,7 +19,7 @@ var (
 func IPRateLimit() echo.MiddlewareFunc {
 	rate := limiter.Rate{
 		Period: 5 * time.Second,
-		Limit:  15,
+		Limit:  30,
 	}
 	store := database.GetLimmiterStore()
 	ipRateLimiter = limiter.New(*store, rate)
