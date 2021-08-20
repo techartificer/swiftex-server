@@ -76,6 +76,13 @@ func deliverParcel(ctx echo.Context) error {
 			resp.Errors = err
 			return resp.Send(ctx)
 		}
+		if err.Error() == string(codes.ShopNotFound) {
+			resp.Title = "Shop not found"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.ShopNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
 		if err.Error() == string(codes.TransactionNotFound) {
 			resp.Title = "Transaction not found"
 			resp.Status = http.StatusNotFound

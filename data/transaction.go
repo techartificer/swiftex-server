@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -164,6 +165,14 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 	}
 	defer session.EndSession(context.Background())
 	callBack := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		shop := models.Shop{}
+		shopCollection := db.Collection(shop.CollectionName())
+		if err := shopCollection.FindOne(sessionCtx, bson.M{"_id": trxHistory.ShopID}).Decode(&shop); err != nil {
+			if mongo.ErrNoDocuments == err {
+				return nil, errors.NewError(string(codes.ShopNotFound))
+			}
+			return nil, err
+		}
 		after := options.After
 		opt := options.FindOneAndUpdateOptions{
 			ReturnDocument: &after,
@@ -204,8 +213,10 @@ func (t *transactionRepoImpl) AddTrxHistory(db *mongo.Database, trxHistory *mode
 		}
 		trxHistory.Payment -= order.Charge
 		if order.PaymentStatus == constants.COD {
-			onePercent := (order.Price / 100) * 1 // calculating COD charge
-			trxHistory.Payment -= onePercent
+			// order.Price (aka total payable) is sum of product price and delivery charge
+			// subtracting delivery charge from total payable, cause total payable only applicable on product price
+			percent := math.Floor((order.Price-order.Charge)/100) * shop.COD
+			trxHistory.Payment -= percent
 		}
 		trx := &models.Transaction{}
 		trxCollection := db.Collection(trx.CollectionName())

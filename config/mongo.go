@@ -21,9 +21,10 @@ func DB() Database {
 func LoadMongoDB() {
 	mu.Lock()
 	defer mu.Unlock()
-
+	envs := []string{"MONGO_DB_NAME", "MONGO_URL"}
+	bindEnvs(envs)
 	db = Database{
-		Name: viper.GetString("database.name"),
-		URL:  viper.GetString("database.URL"),
+		Name: viper.GetString("MONGO_DB_NAME"),
+		URL:  viper.GetString("MONGO_URL"),
 	}
 }

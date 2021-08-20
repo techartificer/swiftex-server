@@ -16,8 +16,8 @@ type Response struct {
 
 //Send after writting response send to the client
 func (r *Response) Send(ctx echo.Context) error {
-	ctx.Response().Header().Set("X-Platform", "File Pile")
-	ctx.Response().Header().Set("X-Platform-Developer", "www.filepile.xyz")
+	ctx.Response().Header().Set("X-Platform", "SwiftEx")
+	ctx.Response().Header().Set("X-Platform-Developer", "www.techartificer.com")
 	ctx.Response().Header().Set("Content-Type", "application/json")
 
 	if err := ctx.JSON(r.Status, r); err != nil {

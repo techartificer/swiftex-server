@@ -19,13 +19,15 @@ func GetJWT() JWT {
 }
 
 // LoadJWT loads jwt configuration
-func LoadJWT() {
+func LoadJWT() error {
 	mu.Lock()
 	defer mu.Unlock()
-
+	envs := []string{"JWT_SECRET", "JWT_REFRESH_TTL", "JWT_TTL"}
+	bindEnvs(envs)
 	jwt = JWT{
-		Secret:     viper.GetString("jwt.secret"),
-		TTL:        viper.GetInt("jwt.TTL"),
-		RefreshTTL: viper.GetInt("jwt.refreshTTL"),
+		Secret:     viper.GetString("JWT_SECRET"),
+		TTL:        viper.GetInt("JWT_TTL"),
+		RefreshTTL: viper.GetInt("JWT_REFRESH_TTL"),
 	}
+	return nil
 }

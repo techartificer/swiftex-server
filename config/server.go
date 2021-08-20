@@ -24,12 +24,13 @@ func GetServer() Server {
 func LoadServer() {
 	mu.Lock()
 	defer mu.Unlock()
-
+	envs := []string{"SERVER_HOST", "SERVER_PORT", "SERVER_NAME", "SERVER_BCRYPT_COST", "SERVER_ENV"}
+	bindEnvs(envs)
 	server = Server{
-		Name:       viper.GetString("server.name"),
-		Host:       viper.GetString("server.host"),
-		Port:       viper.GetInt("server.port"),
-		BcryptCost: viper.GetInt("server.bcryptCost"),
-		Env:        viper.GetString("server.env"),
+		Name:       viper.GetString("SERVER_NAME"),
+		Host:       viper.GetString("SERVER_HOST"),
+		Port:       viper.GetInt("SERVER_PORT"),
+		BcryptCost: viper.GetInt("SERVER_BCRYPT_COST"),
+		Env:        viper.GetString("SERVER_ENV"),
 	}
 }

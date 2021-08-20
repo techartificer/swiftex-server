@@ -3,7 +3,7 @@ package constants
 // AdminRole is the role type of admin
 type AdminRole string
 
-const Version = "v1.0.4"
+const Version = "v1.0.6 beta"
 
 const (
 	AdminType    string = "Admin"
@@ -31,10 +31,12 @@ const (
 var Roles = []AdminRole{SuperAdmin, Admin, Moderator, ZoneManager}
 
 const (
-	// Active status: user can access
-	Active      string = "Active"
+	Active   string = "Active"
+	Deactive string = "Deactive"
+)
+
+const (
 	Cancelled   string = "Cancelled"
-	Deactive    string = "Deactive"
 	Created     string = "Created"
 	Delivered   string = "Delivered"
 	Accepted    string = "Accepted"
@@ -81,5 +83,5 @@ const (
 
 const (
 	DeliveryCharge float64 = 60
-	CodCharge      float64 = 1
+	CodCharge      float64 = 0
 )

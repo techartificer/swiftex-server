@@ -18,6 +18,7 @@ import (
 	"github.com/techartificer/swiftex/validators"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterShopRoutes(endpoint *echo.Group) {
@@ -134,6 +135,29 @@ func shopCreate(ctx echo.Context) error {
 	db := database.GetDB()
 	shopRepo := data.NewShopRepo()
 	shop.Owner = ctx.Get(constants.UserID).(primitive.ObjectID)
+	merchantRepo := data.NewMerchantRepo()
+	merchant, err := merchantRepo.FindById(db, shop.Owner)
+	if err != nil {
+		logger.Log.Errorln(err)
+		if err == mongo.ErrNoDocuments {
+			resp.Title = "Merchant is not registered"
+			resp.Status = http.StatusNotFound
+			resp.Code = codes.MerchantNotFound
+			resp.Errors = err
+			return resp.Send(ctx)
+		}
+		resp.Title = "Something went wrong"
+		resp.Status = http.StatusInternalServerError
+		resp.Code = codes.DatabaseQueryFailed
+		resp.Errors = err
+		return resp.Send(ctx)
+	}
+	if merchant.Status == constants.Deactive {
+		resp.Title = "Your status is deactive"
+		resp.Status = http.StatusForbidden
+		resp.Code = codes.MerchantDeactive
+		return resp.Send(ctx)
+	}
 	shop.ShopID = slug.Make(shop.Name)
 	trx, err := shopRepo.Create(db, shop)
 	if err != nil {

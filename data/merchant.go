@@ -15,6 +15,7 @@ type MerchentRepository interface {
 	FindByPhone(db *mongo.Database, phone string) (*models.Merchant, error)
 	Merchants(db *mongo.Database, lastID string) (*[]models.Merchant, error)
 	UpdateByPhone(db *mongo.Database, phone string, merchant *models.Merchant) (*models.Merchant, error)
+	FindById(db *mongo.Database, _id primitive.ObjectID) (*models.Merchant, error)
 }
 
 type merchantRepoImpl struct{}
@@ -80,4 +81,15 @@ func (m *merchantRepoImpl) UpdateByPhone(db *mongo.Database, phone string, merch
 	update := bson.M{"$set": merchant}
 	err := merchantCollection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(updatedMerchant)
 	return merchant, err
+}
+
+func (m *merchantRepoImpl) FindById(db *mongo.Database, _id primitive.ObjectID) (*models.Merchant, error) {
+	merchant := &models.Merchant{}
+	merchantCollection := db.Collection(merchant.CollectionName())
+	filter := bson.M{"_id": _id}
+	err := merchantCollection.FindOne(context.Background(), filter).Decode(merchant)
+	if err != nil {
+		return nil, err
+	}
+	return merchant, nil
 }
